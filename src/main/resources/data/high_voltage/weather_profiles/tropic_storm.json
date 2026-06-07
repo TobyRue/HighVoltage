@@ -1,0 +1,63 @@
+{
+  "biomes": ["#forge:is_wet"],
+  "base_lightning_chance": 10000,
+  "effects": [
+    {
+      "type": "player_bonus_lightning",
+      "radius": 3,
+      "chance": 1000
+    },
+    {
+      "type": "damage",
+      "entity_predicate": ["#forge:boats"],
+      "damage": 2,
+      "chance": 200
+    },
+    {
+      "type": "ring_bell",
+      "volume": 1.0,
+      "pitch": 0.5,
+      "chance": 1000
+    },
+    {
+      "type": "place_layer",
+      "block": "minecraft:snow",
+      "state": "layers",
+      "max": "8",
+      "noisy": true,
+      "chance": 10
+    },
+    {
+      "type": "damage_armor",
+      "slots": ["slot.chest","slot.head"],
+      "damage": 1,
+      "chance": 100
+    },
+    {
+      "type": "wet_entities"
+    },
+    {
+      "type": "extinguish_blocks",
+      "netherack": true
+    },
+    {
+      "type": "hunger",
+      "exhaustion": 0.5,
+      "chance": 20
+    },
+    {
+      "type": "summon_entity",
+      "entity": "minecraft:zombie",
+      "data": {"noAi":true},
+      "chance": 200
+    },
+    {
+      "type": "freeze",
+      "freezing_ticks": 20
+    },
+    {
+      "type": "command",
+      "run": "give @a minecraft:diamond "
+    }
+  ]
+}

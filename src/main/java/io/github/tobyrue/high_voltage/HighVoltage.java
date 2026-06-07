@@ -20,6 +20,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DataPackRegistriesHooks;
+import net.minecraftforge.registries.NewRegistryEvent;
 import org.slf4j.Logger;
 
 import java.util.Optional;
@@ -48,6 +49,11 @@ public class HighVoltage {
         modEventBus.addListener(this::onConfigReload);
     }
 
+    @SubscribeEvent
+    public static void onNewRegistry(NewRegistryEvent event) {
+        WeatherProfile.WeatherEffectType.createRegistry(event);
+        WeatherProfile.createRegistry(event);
+    }
 
     private void onConfigLoad(ModConfigEvent.Loading event) {
         if (event.getConfig().getSpec() == ServerConfig.SPEC) {
@@ -66,7 +72,7 @@ public class HighVoltage {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        DataPackRegistriesHooks.addRegistryCodec();
+
     }
 
     @SubscribeEvent

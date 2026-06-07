@@ -35,7 +35,6 @@ public class ModEvents {
 
 
 
-
     @SubscribeEvent
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel world) {

@@ -17,24 +17,24 @@
   "base_lightning_chance": 10000,
   "effects": [
     {
-      "type": "player_bonus_lightning",
+      "type": "high_voltage:player_bonus_lightning",
       "radius": 3,
       "chance": 1000
     },
     {
-      "type": "damage",
+      "type": "high_voltage:damage",
       "entity_predicate": ["#forge:boats"],
       "damage": 2,
       "chance": 200
     },
     {
-      "type": "ring_bell",
+      "type": "high_voltage:ring_bell",
       "volume": 1.0,
       "pitch": 0.5,
       "chance": 1000
     },
     {
-      "type": "place_layer",
+      "type": "high_voltage:place_layer",
       "block": "minecraft:snow",
       "state": "layers",
       "max": "8",
@@ -42,44 +42,44 @@
       "chance": 10
     },
     {
-      "type": "damage_armor",
+      "type": "high_voltage:damage_armor",
       "slots": ["slot.chest","slot.head"],
       "damage": 1,
       "chance": 100
     },
     {
-      "type": "wet_entities"
+      "type": "high_voltage:wet_entities"
     },
     {
-      "type": "extinguish_blocks",
+      "type": "high_voltage:extinguish_blocks",
       "netherack": true
     },
     {
-      "type": "hunger",
+      "type": "high_voltage:hunger",
       "exhaustion": 0.5,
       "chance": 20
     },
     {
-      "type": "summon_entity",
+      "type": "high_voltage:summon_entity",
       "entity": "minecraft:zombie",
       "data": {"noAi":true},
       "chance": 200
     },
     {
-      "type": "freeze",
+      "type": "high_voltage:freeze",
       "freezing_ticks": 20
     },
     {
-      "type": "command",
+      "type": "high_voltage:command",
       "run": "give @a minecraft:diamond "
     },
     {
-      "type": "cauldron",
+      "type": "high_voltage:cauldron",
       "values": ["water"],
       "chance": 1000
     },
     {
-      "type": "velocity",
+      "type": "high_voltage:velocity",
       "x": 0,
       "y": 0,
       "z": 0,

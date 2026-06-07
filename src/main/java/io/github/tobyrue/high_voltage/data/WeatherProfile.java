@@ -3,11 +3,16 @@ package io.github.tobyrue.high_voltage.data;
 import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.arguments.ResourceOrTagLocationArgument;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.data.BuiltinRegistries;
 import net.minecraft.nbt.TagType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.commands.LocateCommand;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.Tags;
@@ -15,9 +20,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public record WeatherProfile(
-        List<String> biomes, //TODO FINISH?
+        List<HolderSet<Biome>> biomes, //TODO FINISH?
         @Nullable Precipitation precipitation,
         @Nullable Fog fog,
         List<String> effects, //TODO FINISH WeatherEffect
@@ -25,7 +31,7 @@ public record WeatherProfile(
 ) {
 
     public static final Codec<WeatherProfile> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.listOf().fieldOf("biomes").forGetter(WeatherProfile::biomes), //TODO
+            Biome.LIST_CODEC.listOf().fieldOf("biomes").forGetter(WeatherProfile::biomes), //TODO
             Precipitation.CODEC.fieldOf("precipitation").forGetter(WeatherProfile::precipitation),
             Fog.CODEC.fieldOf("fog").forGetter(WeatherProfile::fog),
             Codec.STRING.listOf().fieldOf("effects").forGetter(WeatherProfile::effects), //TODO
@@ -34,6 +40,7 @@ public record WeatherProfile(
 
 
     public static Integer hexStringToInt(final String hex) {
+
         try {
             return Integer.parseInt(hex.substring(1), 16);
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {

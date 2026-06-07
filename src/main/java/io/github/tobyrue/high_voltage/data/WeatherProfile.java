@@ -34,7 +34,6 @@ public record WeatherProfile(
 
 
     public static Integer hexStringToInt(final String hex) {
-        Tags.Biomes.
         try {
             return Integer.parseInt(hex.substring(1), 16);
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {

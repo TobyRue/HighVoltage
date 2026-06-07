@@ -3,17 +3,17 @@
   "precipitation": {
     "texture": "high_voltage:tropical_rain",
     "tint": "#FFFFFF",
-    "vy": 4.0,
     "vx": 1.0,
+    "vy": 4.0,
     "land_particle": "minecraft:rain",
     "land_sound": false
   },
   "fog": {
     "color": "#224422",
-    "start": "10",
+    "start": 10,
     "end": 30
   },
-  
+
   "base_lightning_chance": 10000,
   "effects": [
     {

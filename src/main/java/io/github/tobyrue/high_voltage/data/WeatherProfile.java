@@ -1,11 +1,9 @@
 package io.github.tobyrue.high_voltage.data;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tobyrue.high_voltage.HighVoltage;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryCodecs;
@@ -13,7 +11,6 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.registries.*;
@@ -25,7 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public record WeatherProfile(
-        List<Either<TagKey<Biome>, Holder<Biome>>> biomes, //TODO FINISH?
+        HolderSet<Biome> biomes, //TODO FINISH?
         @Nullable Precipitation precipitation,
         @Nullable Fog fog,
         List<WeatherEffect> effects, //TODO FINISH WeatherEffect

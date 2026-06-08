@@ -1,16 +1,19 @@
 package io.github.tobyrue.high_voltage.data;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tobyrue.high_voltage.HighVoltage;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryCodecs;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.registries.*;
@@ -18,10 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public record WeatherProfile(
-        List<HolderSet<Biome>> biomes, //TODO FINISH?
+        List<Either<TagKey<Biome>, Holder<Biome>>> biomes, //TODO FINISH?
         @Nullable Precipitation precipitation,
         @Nullable Fog fog,
         List<WeatherEffect> effects, //TODO FINISH WeatherEffect
@@ -40,12 +44,14 @@ public record WeatherProfile(
 
 
     public static final Codec<WeatherProfile> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Biome.LIST_CODEC.listOf().fieldOf("biomes").forGetter(WeatherProfile::biomes), //TODO
-            Precipitation.CODEC.fieldOf("precipitation").forGetter(WeatherProfile::precipitation),
-            Fog.CODEC.fieldOf("fog").forGetter(WeatherProfile::fog),
+            Biome.LIST_CODEC.fieldOf("biomes").forGetter(WeatherProfile::biomes),
+            Precipitation.CODEC.optionalFieldOf("precipitation").forGetter(wp -> Optional.ofNullable(wp.precipitation())),
+            Fog.CODEC.optionalFieldOf("fog").forGetter(wp -> Optional.ofNullable(wp.fog())),
             WeatherEffect.CODEC.listOf().fieldOf("effects").forGetter(WeatherProfile::effects),
             Codec.INT.fieldOf("base_lightning_chance").forGetter(WeatherProfile::baseLightningChance)
-    ).apply(instance, WeatherProfile::new));
+    ).apply(instance,
+            (biomes, precip, fog, effects, chance) ->
+            new WeatherProfile(biomes, precip.orElse(null), fog.orElse(null), effects, chance)));
 
 
     public static Integer hexStringToInt(final String hex) {
@@ -65,17 +71,29 @@ public record WeatherProfile(
     }
 
 
-    record Precipitation(ResourceLocation texture, int tint, float vx, float vy, ParticleType<?> particle, boolean sound) {
+    public record Precipitation(
+            ResourceLocation texture,
+            int tint,
+            float vx,
+            float vy,
+            boolean does_rain,
+            @Nullable ParticleType<?> particle,
+            boolean sound
+    ) {
         public static final Codec<Precipitation> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ResourceLocation.CODEC.fieldOf("texture").forGetter(Precipitation::texture),
-                Codec.STRING.fieldOf("tint").xmap(WeatherProfile::hexStringToInt, WeatherProfile::intToHexString).forGetter(Precipitation::tint),
+                ResourceLocation.CODEC.optionalFieldOf("texture").forGetter(p -> Optional.ofNullable(p.texture)),
+                Codec.STRING.optionalFieldOf("tint", "#FFFFFF")
+                        .xmap(WeatherProfile::hexStringToInt, WeatherProfile::intToHexString)
+                        .forGetter(Precipitation::tint),
                 Codec.FLOAT.fieldOf("vx").forGetter(Precipitation::vx),
-                Codec.FLOAT.fieldOf("vx").forGetter(Precipitation::vy),
-                ForgeRegistries.PARTICLE_TYPES.getCodec().fieldOf("particle").forGetter(Precipitation::particle),
-                Codec.BOOL.fieldOf("sound").forGetter(Precipitation::sound)
-            ).apply(instance, Precipitation::new));
+                Codec.FLOAT.fieldOf("vy").forGetter(Precipitation::vy),
+                Codec.BOOL.optionalFieldOf("does_rain").forGetter(p -> Optional.ofNullable(p.does_rain)),
+                ForgeRegistries.PARTICLE_TYPES.getCodec().optionalFieldOf("land_particle").forGetter(p -> Optional.ofNullable(p.particle())),
+                Codec.BOOL.optionalFieldOf("land_sound").forGetter(p -> Optional.ofNullable(p.sound))
+        ).apply(instance, (tex, tint, vx, vy, rain, part, snd) ->
+                new Precipitation(tex.orElse(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/none.png")), tint, vx, vy, rain.orElse(false), part.orElse(null), snd.orElse(false))));
     }
-    record Fog(int color, int start, int end) {
+    public record Fog(int color, int start, int end) {
         public static final Codec<Fog> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("color").xmap(WeatherProfile::hexStringToInt, WeatherProfile::intToHexString).forGetter(Fog::color),
             Codec.INT.fieldOf("start").forGetter(Fog::start),
@@ -85,46 +103,36 @@ public record WeatherProfile(
     public interface WeatherEffect {
 
 
-        public static final HashMap<ResourceLocation, Codec<WeatherEffect>> CODECS = new HashMap<>();
 
-        Codec<WeatherEffect> CODEC = WeatherEffectType.REGISTRY.get().getCodec()
-                .dispatch(
-                        WeatherEffect::getType,         // How to get the Type object from an effect
-                        WeatherEffectType::codec        // How to get the Codec from the Type object
-                );
+        Codec<WeatherEffect> CODEC = new Codec<>() {
+            private Codec<WeatherEffect> cached;
 
-        public WeatherEffectType getType();
+            private Codec<WeatherEffect> getInternal() {
+                if (cached == null) {
+                    cached = WeatherEffectType.REGISTRY.get().getCodec().dispatch(
+                            WeatherEffect::getType,
+                            WeatherEffectType::codec
+                    );
+                }
+                return cached;
+            }
 
-//        public static final Codec<WeatherEffect> CODEC = Codec.pair(ResourceLocation.CODEC.fieldOf("type").codec(), Codec.PASSTHROUGH).xmap(
-//                        pair -> CODECS.get(pair.getFirst()).parse(pair.getSecond()),
-//                        (WeatherEffect effect) -> {
-//                        new Dynamic<WeatherEffect>(JsonOps.INSTANCE, CODECS.get(effect.getType().getKey()).encodeStart(JsonOps.INSTANCE, effect))
-//                            return new Pair<ResourceLocation, Dynamic<?>>(effect.getType().getKey(), CODECS.get(effect.getType().getKey()).encodeStart(JsonOps.INSTANCE, effect)))
-//                        }
-//                );
-//                RecordCodecBuilder.create(instance -> instance.group(
-//                Codec.STRING.fieldOf("field"),
-//                Codec.PASSTHROUGH.fieldOf("args").xmap((a) -> {
-//
-//                }, (b) -> {
-//
-//                })
-//        ).apply(instance, WeatherEffect::new));
-//        public static final Codec<WeatherEffect> WEATHER_EFFECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-//
-//        ).apply(instance, WeatherEffect::new));
+            @Override
+            public <T> DataResult<Pair<WeatherEffect, T>> decode(DynamicOps<T> ops, T input) {
+                DataResult<Pair<WeatherEffect, T>> result = getInternal().decode(ops, input);
+                result.error().ifPresent(err -> System.out.println("Effect Parse Error: " + err.message()));
+                return result;
+            }
 
+            @Override
+            public <T> DataResult<T> encode(WeatherEffect input, DynamicOps<T> ops, T prefix) {
+                return getInternal().encode(input, ops, prefix);
+            }
+        };
+        WeatherEffectType<?> getType();
     }
 
-    public static final class WeatherEffectType<T extends WeatherEffect> {
-        //        public static final ResourceKey<Registry<WeatherEffectType<?>>> WEATHER_EFFECT_TYPE_REGISTRY = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "weather_effect_type"));
-        private final ResourceLocation key;
-        private final Function<Dynamic<?>, T> create;
-
-        public WeatherEffectType(ResourceLocation key, Function<Dynamic<?>, T> create) {
-            this.key = key;
-            this.create = create;
-        }
+    public record WeatherEffectType<T extends WeatherEffect>(Codec<T> codec) {
 
         public static final ResourceKey<Registry<WeatherEffectType<?>>> RESOURCE_KEY =
                 ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "weather_effect_type"));
@@ -138,10 +146,6 @@ public record WeatherProfile(
         public static void createRegistry(NewRegistryEvent event) {
             event.create(new RegistryBuilder<WeatherEffectType<?>>()
                     .setName(RESOURCE_KEY.location()));
-        }
-
-        public ResourceLocation getKey() {
-            return key;
         }
     }
 }

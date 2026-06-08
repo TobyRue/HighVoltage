@@ -13,7 +13,12 @@ public record RingBellEffect(float volume, float pitch, int chance) implements W
             Codec.INT.fieldOf("chance").forGetter(RingBellEffect::chance)
     ).apply(instance, RingBellEffect::new));
 
-    static {
-        WeatherProfile.WeatherEffect.CODECS.put(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "ring_bell"), CODEC);
+//    static {
+//        WeatherProfile.WeatherEffect.CODECS.put(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "ring_bell"), CODEC);
+//    }
+
+    @Override
+    public WeatherProfile.WeatherEffectType<?> getType() {
+        return ModWeatherEffects.RING_BELL.get();
     }
 }

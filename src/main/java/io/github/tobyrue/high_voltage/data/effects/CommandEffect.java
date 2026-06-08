@@ -12,12 +12,9 @@ public record CommandEffect(String command, int chance) implements WeatherProfil
             Codec.INT.fieldOf("chance").forGetter(CommandEffect::chance)
     ).apply(instance, CommandEffect::new));
 
-    static {
-        WeatherProfile.WeatherEffect.CODECS.put(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "command"), CODEC);
-    }
 
     @Override
-    public WeatherProfile.WeatherEffectType getType() {
+    public WeatherProfile.WeatherEffectType<?> getType() {
         return ModWeatherEffects.COMMAND.get();
     }
 }

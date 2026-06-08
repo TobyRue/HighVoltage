@@ -1,0 +1,90 @@
+{
+  "biomes": ["minecraft:jungle"],
+  "precipitation": {
+    "texture": "high_voltage:tropical_rain",
+    "tint": "#FFFFFF",
+    "vx": 1.0,
+    "vy": 4.0,
+    "does_rain": false,
+    "land_particle": "minecraft:rain",
+    "land_sound": false
+  },
+  "fog": {
+    "color": "#224422",
+    "start": 10,
+    "end": 30
+  },
+
+  "base_lightning_chance": 10000,
+  "effects": [
+    {
+      "type": "high_voltage:player_bonus_lightning",
+      "radius": 3,
+      "chance": 1000
+    },
+    {
+      "type": "high_voltage:damage",
+      "entity_predicate": ["#forge:boats"],
+      "damage": 2,
+      "chance": 200
+    },
+    {
+      "type": "high_voltage:ring_bell",
+      "volume": 1.0,
+      "pitch": 0.5,
+      "chance": 1000
+    },
+    {
+      "type": "high_voltage:place_layer",
+      "block": "minecraft:snow",
+      "state": "layers",
+      "max": "8",
+      "noisy": true,
+      "chance": 10
+    },
+    {
+      "type": "high_voltage:damage_armor",
+      "slots": ["chest","head"],
+      "damage": 1,
+      "chance": 100
+    },
+    {
+      "type": "high_voltage:wet_entities"
+    },
+    {
+      "type": "high_voltage:extinguish_blocks",
+      "netherack": true
+    },
+    {
+      "type": "high_voltage:hunger",
+      "exhaustion": 0.5,
+      "chance": 20
+    },
+    {
+      "type": "high_voltage:summon_entity",
+      "entity": "minecraft:zombie",
+      "data": {"noAi":true},
+      "chance": 200
+    },
+    {
+      "type": "high_voltage:freeze",
+      "freezing_ticks": 20
+    },
+    {
+      "type": "high_voltage:command",
+      "run": "give @a minecraft:diamond "
+    },
+    {
+      "type": "high_voltage:cauldron",
+      "values": ["water"],
+      "chance": 1000
+    },
+    {
+      "type": "high_voltage:velocity",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "chance": 1000
+    }
+  ]
+}

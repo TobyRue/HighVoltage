@@ -7,6 +7,8 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.tobyrue.high_voltage.HighVoltage;
 import io.github.tobyrue.high_voltage.WeatherManager;
+import io.github.tobyrue.high_voltage.data.WeatherProfile;
+import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -62,46 +64,13 @@ public class WeatherRendererMixin {
 
 
     @Unique
-    private WeatherManager.WeatherProfile high_voltage$getEffectiveProfile() {
+    private WeatherProfile high_voltage$getEffectiveProfile() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || !mc.level.isThundering()) {
-            return null;
-        }
+        if (mc.level == null || !mc.level.isThundering()) return null;
 
         BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
         Holder<Biome> biomeHolder = mc.level.getBiome(pos);
-
-
-        WeatherManager.WeatherProfile profile = WeatherManager.getCurrentProfile(biomeHolder);
-        if (profile != null) return profile;
-
-        if (mc.level.isThundering()) {
-            if (biomeHolder.is(Tags.Biomes.IS_DESERT)) {
-                return new WeatherManager.WeatherProfile(
-                        ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/dust.png"),
-                        0xE3BC82, 0xE3BC82,2.0f, 25.0f, 0.2f, 2.5f, null, false
-                );
-            }
-            if (biomeHolder.is(BiomeTags.IS_BADLANDS)) {
-                return new WeatherManager.WeatherProfile(
-                        ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/dust.png"),
-                        0xA85B0A, 0xA85B0A,8.0f, 32.0f, 0.2f, 2.5f, null, false
-                );
-            }
-            if (isJungle(biomeHolder.get())) {
-                return new WeatherManager.WeatherProfile(
-                        ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/tropical_rain.png"),
-                        0x224422, 0xFFFFFF, 10.0f, 30.0f, 4.0f, 1.0f, ParticleTypes.RAIN.toString(), true
-                );
-            }
-            if (biomeHolder.is(Tags.Biomes.IS_COLD) || biomeHolder.is(Tags.Biomes.IS_SNOWY)) {
-                return new WeatherManager.WeatherProfile(
-                        ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/heavy_snow.png"),
-                        0xFFFFFF, 0xFFFFFF,5.0f, 40.0f, 2.0f, 0.3f, null, false
-                );
-            }
-        }
-        return null;
+        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
     }
 
     @Redirect(
@@ -109,33 +78,32 @@ public class WeatherRendererMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z")
     )
     private boolean high_voltage$textureAndColorSwap(Biome instance, BlockPos pos) {
-        WeatherManager.WeatherProfile profile = high_voltage$getProfileAtPos(pos);
-        if (profile == null) profile = WeatherManager.getCurrentProfile(Minecraft.getInstance().level.getBiome(pos));
+        Minecraft mc = Minecraft.getInstance();
+        Holder<Biome> biomeHolder = mc.level.getBiome(pos);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
 
-        ResourceLocation neededTexture = (profile != null) ? profile.texture() :
-                (instance.warmEnoughToRain(pos) ?
-                        ResourceLocation.parse("textures/environment/rain.png") :
-                        ResourceLocation.parse("textures/environment/snow.png"));
+        if ((profile.precipitation() != null)) {
+            ResourceLocation neededTexture = profile.precipitation().texture();
 
-        if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder bufferbuilder = tesselator.getBuilder();
+            if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
+                Tesselator tesselator = Tesselator.getInstance();
+                BufferBuilder bufferbuilder = tesselator.getBuilder();
 
-            if (bufferbuilder.building()) {
-                tesselator.end();
-                RenderSystem.setShaderTexture(0, neededTexture);
+                if (bufferbuilder.building()) {
+                    tesselator.end();
+                    RenderSystem.setShaderTexture(0, neededTexture);
 
-                int tint = profile.textureTint();
-                float r = ((tint >> 16) & 0xFF) / 255f;
-                float g = ((tint >> 8) & 0xFF) / 255f;
-                float b = (tint & 0xFF) / 255f;
-                RenderSystem.setShaderColor(r, g, b, 1.0F);
+                    int tint = (profile != null) ? profile.precipitation().tint() : 0xFFFFFF;
+                    float r = ((tint >> 16) & 0xFF) / 255f;
+                    float g = ((tint >> 8) & 0xFF) / 255f;
+                    float b = (tint & 0xFF) / 255f;
+                    RenderSystem.setShaderColor(r, g, b, 1.0F);
 
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
+                    bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
+                }
+                high_voltage$currentBatchTexture = neededTexture;
             }
-            high_voltage$currentBatchTexture = neededTexture;
         }
-
         return instance.warmEnoughToRain(pos);
     }
 
@@ -152,8 +120,6 @@ public class WeatherRendererMixin {
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V")
     )
     private void high_voltage$handleTextureSwap(int unit, ResourceLocation texture) {
-        // We capture the texture vanilla wants to use (Rain or Snow)
-        // and store it as our "default" for this batch.
         high_voltage$currentBatchTexture = texture;
         RenderSystem.setShaderTexture(unit, texture);
     }
@@ -195,27 +161,24 @@ public class WeatherRendererMixin {
 
 
     @Unique
-    private WeatherManager.WeatherProfile high_voltage$getProfileAtPos(BlockPos pos) {
+    private WeatherProfile high_voltage$getProfileAtPos(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || !mc.level.isThundering()) return null;
 
         Holder<Biome> biomeHolder = mc.level.getBiome(pos);
-        return WeatherManager.getCurrentProfile(biomeHolder);
+        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
     }
 
-    private boolean isJungle(Biome biome) {
-        return biome.getBaseTemperature() > 0.8f && biome.getFogColor() > 0;
-    }
 
-    @Unique
-    private WeatherManager.WeatherProfile high_voltage$getProfile() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) {
-            BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
-            return WeatherManager.getCurrentProfile(mc.level.getBiome(pos));
-        }
-        return null;
-    }
+//    @Unique
+//    private WeatherManager.WeatherProfile high_voltage$getProfile() {
+//        Minecraft mc = Minecraft.getInstance();
+//        if (mc.level != null) {
+//            BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
+//            return WeatherManager.getCurrentProfile(mc.level.getBiome(pos));
+//        }
+//        return null;
+//    }
 
     @Redirect(
             method = "renderSnowAndRain",
@@ -223,8 +186,8 @@ public class WeatherRendererMixin {
     )
 
     private int high_voltage$speed(LevelRenderer instance) {
-        WeatherManager.WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? (int)(this.ticks * profile.vSpeed()) : this.ticks;
+        WeatherProfile profile = high_voltage$getEffectiveProfile();
+        return (profile != null) ? (int)(this.ticks * profile.precipitation().vy()) : this.ticks;
     }
 
     @ModifyVariable(
@@ -234,8 +197,8 @@ public class WeatherRendererMixin {
     )
 
     private float high_voltage$vSpeed(float val) {
-        WeatherManager.WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? val * profile.vSpeed() : val;
+        WeatherProfile profile = high_voltage$getEffectiveProfile();
+        return (profile != null) ? val * profile.precipitation().vy() : val;
     }
 
     @ModifyVariable(
@@ -244,8 +207,8 @@ public class WeatherRendererMixin {
             ordinal = 3
     )
     private float high_voltage$hWind(float val) {
-        WeatherManager.WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? val + profile.hWind() : val;
+        WeatherProfile profile = high_voltage$getEffectiveProfile();
+        return (profile != null) ? val + profile.precipitation().vx() : val;
     }
 
 
@@ -257,7 +220,7 @@ public class WeatherRendererMixin {
         Minecraft mc = Minecraft.getInstance();
         BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
 
-        if (high_voltage$getEffectiveProfile() != null) {
+        if (high_voltage$getEffectiveProfile() != null && high_voltage$getEffectiveProfile().precipitation() != null) {
             return Biome.Precipitation.RAIN;
         }
         return instance.getPrecipitation();
@@ -268,7 +231,7 @@ public class WeatherRendererMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getPrecipitation()Lnet/minecraft/world/level/biome/Biome$Precipitation;")
     )
     private Biome.Precipitation high_voltage$tickWeatherInDesert(Biome instance) {
-        if (high_voltage$getEffectiveProfile() != null) {
+        if (high_voltage$getEffectiveProfile() != null && high_voltage$getEffectiveProfile().precipitation() != null) {
             return Biome.Precipitation.RAIN;
         }
         return instance.getPrecipitation();
@@ -279,9 +242,9 @@ public class WeatherRendererMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V")
     )
     private void high_voltage$conditionalPlaySound(ClientLevel level, BlockPos pos, SoundEvent sound, SoundSource source, float vol, float pitch, boolean distanceDelay) {
-        WeatherManager.WeatherProfile profile = high_voltage$getEffectiveProfile();
+        WeatherProfile profile = high_voltage$getEffectiveProfile();
 
-        if (profile != null && !profile.hasRainSound()) {
+        if (profile != null && !profile.precipitation().sound()) {
             return;
         }
 
@@ -295,12 +258,11 @@ public class WeatherRendererMixin {
     )
     private void high_voltage$localizedParticles(ClientLevel level, ParticleOptions options, double x, double y, double z, double vx, double vy, double vz) {
         BlockPos pos = new BlockPos(x, y, z);
-        WeatherManager.WeatherProfile profile = high_voltage$getProfileAtPos(pos);
+        WeatherProfile profile = high_voltage$getProfileAtPos(pos);
 
-        if (profile != null && !profile.particleType().equalsIgnoreCase("none") && !profile.particleType().equalsIgnoreCase("null")) {
+        if (profile != null && profile.precipitation() != null && profile.precipitation().particle() != null) {
             try {
-                ResourceLocation particleId = ResourceLocation.parse(profile.particleType());
-                ParticleType<?> type = ForgeRegistries.PARTICLE_TYPES.getValue(particleId);
+                ParticleType<?> type = profile.precipitation().particle();
                 if (type instanceof ParticleOptions customOptions) {
                     level.addParticle(customOptions, x, y, z, vx, vy, vz);
                     return;

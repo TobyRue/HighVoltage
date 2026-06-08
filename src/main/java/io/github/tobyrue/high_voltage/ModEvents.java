@@ -1,5 +1,8 @@
 package io.github.tobyrue.high_voltage;
 
+import io.github.tobyrue.high_voltage.data.WeatherProfile;
+import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
+import io.github.tobyrue.high_voltage.data.effects.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -14,6 +17,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.Dolphin;
+import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.biome.Biome;
@@ -24,6 +31,7 @@ import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,23 +42,33 @@ import net.minecraftforge.registries.ForgeRegistries;
 public class ModEvents {
 
 
-
     @SubscribeEvent
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel world) {
             if (world.isThundering()) {
                 for (ServerPlayer player : world.players()) {
                     Holder<Biome> biome = world.getBiome(player.blockPosition());
-                    var profile = WeatherManager.ServerWeatherManager.getCurrentServerProfile(biome);
+                    WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
 
-                    if (world.random.nextInt(profile.playerChance()) == 0) {
-                        int x = player.getBlockX() + (world.random.nextInt(80) - 40);
-                        int z = player.getBlockZ() + (world.random.nextInt(80) - 40);
-                        BlockPos strikePos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z));
+                    BonusLightningEffect effect = WeatherProfileLoader.getEffect(profile, ModWeatherEffects.PLAYER_BONUS_LIGHTNING);
+                    if (effect == null) continue;
+
+                    if (world.random.nextInt(effect.chance()) == 0) {
+                        int blockRadius = effect.chunk_radius() * 16;
+
+                        int offsetX = world.random.nextInt(blockRadius * 2) - blockRadius;
+                        int offsetZ = world.random.nextInt(blockRadius * 2) - blockRadius;
+
+                        BlockPos strikePos = world.getHeightmapPos(
+                                Heightmap.Types.MOTION_BLOCKING,
+                                player.blockPosition().offset(offsetX, 0, offsetZ)
+                        );
 
                         LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(world);
-                        bolt.moveTo(Vec3.atBottomCenterOf(strikePos));
-                        world.addFreshEntity(bolt);
+                        if (bolt != null) {
+                            bolt.moveTo(Vec3.atBottomCenterOf(strikePos));
+                            world.addFreshEntity(bolt);
+                        }
                     }
                 }
             }
@@ -64,9 +82,11 @@ public class ModEvents {
         ServerPlayer player = (ServerPlayer) event.player;
         ServerLevel world = player.getLevel();
         BlockPos playerPos = player.blockPosition();
-        if (world.isThundering() && WeatherSafetyHelper.isOutside(world, playerPos)) {
-            var profileHolder = world.getBiome(playerPos);
-            var profile = WeatherManager.ServerWeatherManager.getCurrentServerProfile(profileHolder);
+        // && WeatherSafetyHelper.isOutside(world, playerPos)
+        if (world.isThundering()) {
+            var biome = world.getBiome(playerPos);
+            var profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
+
             int r = 16;
             BlockPos targetPos = null;
             int attempts = 0;
@@ -75,7 +95,7 @@ public class ModEvents {
                 BlockPos potentialPos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING,
                         playerPos.offset(world.random.nextInt(r*2)-r, 0, world.random.nextInt(r*2)-r));
 
-                if (world.getBiome(potentialPos).equals(profileHolder)) {
+                if (world.getBiome(potentialPos).equals(biome)) {
                     targetPos = potentialPos;
                     break;
                 }
@@ -83,196 +103,115 @@ public class ModEvents {
             }
             if (targetPos == null) targetPos = playerPos;
 
-            for (String action : profile.effects()) {
-                System.out.println("profile: " + profile);
-                runWeatherAction(world, player, playerPos, targetPos, action.trim());
+            for (WeatherProfile.WeatherEffect action : profile.effects()) {
+                runWeatherEffect(world, player, targetPos, action);
             }
         }
     }
 
-    private static void runWeatherAction(ServerLevel world, ServerPlayer player, BlockPos playerPos, BlockPos targetPos, String action) {
-        if (action.isEmpty() || action.equalsIgnoreCase("none")) return;
+    private static void runWeatherEffect(ServerLevel world, ServerPlayer player, BlockPos targetPos, WeatherProfile.WeatherEffect effect) {
 
-        String name;
-        String args = "";
-
-        if (action.contains("[") && action.contains("]")) {
-            name = action.substring(0, action.indexOf("["));
-            args = action.substring(action.indexOf("[") + 1, action.lastIndexOf("]"));
-        } else {
-            name = action;
+        if (effect instanceof HungerEffect hunger) {
+            if (world.random.nextInt(hunger.chance()) == 0) {
+                player.getFoodData().addExhaustion(hunger.exhaustion());
+            }
         }
 
-        String[] argArray = args.isEmpty() ? new String[0] : args.split(",");
-
-
-        switch (name) {
-            case "hunger":
-                player.getFoodData().addExhaustion(argArray.length > 0 ? Float.parseFloat(argArray[0]) : 0.05f);
-                break;
-
-            case "damage": // damage[whitelist,amount]
-                if (checkWhitelist(player, argArray[0])) {
-                    player.hurt(DamageSource.GENERIC, Float.parseFloat(argArray[1]));
-                }
-                break;
-
-            case "ring_bell": // ring_bell[chance,volume,pitch]
-                if (argArray.length > 0 && world.random.nextFloat() < Float.parseFloat(argArray[0])) {
-                    float volume = argArray.length > 1 ? Float.parseFloat(argArray[1]) : 1.0f;
-                    float pitch = argArray.length > 2 ? Float.parseFloat(argArray[2]) : 1.0f;
-
-                    world.playSound(null, targetPos,
-                            net.minecraft.sounds.SoundEvents.BELL_BLOCK,
-                            net.minecraft.sounds.SoundSource.BLOCKS,
-                            volume, pitch);
-                }
-                break;
-
-            case "summon": // summon[entity_id,chance]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[1])) {
-                    EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.parse(argArray[0]));
-                    if (type != null) {
-                        net.minecraft.world.entity.Entity e = type.create(world);
-                        if (e != null) {
-                            e.moveTo(Vec3.atBottomCenterOf(targetPos));
-                            world.addFreshEntity(e);
-                        }
-                    }
-                }
-                break;
-
-            case "cauldron": // cauldron[block_id,chance] -> fill cauldron with lava/water
-                if (world.random.nextFloat() < Float.parseFloat(argArray[1])) {
-                    BlockState state = world.getBlockState(targetPos);
-                    if (state.getBlock() instanceof CauldronBlock) {
-                        Block fill = ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse(argArray[0]));
-                        if (fill != null) world.setBlockAndUpdate(targetPos, fill.defaultBlockState());
-                    }
-                }
-                break;
-
-            case "place": // place[block_id,chance]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[1])) {
-                    Block b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse(argArray[0]));
-                    if (b != null && world.isEmptyBlock(targetPos) && b.defaultBlockState().canSurvive(world, targetPos)) {
-                        world.setBlockAndUpdate(targetPos, b.defaultBlockState());
-                    }
-                }
-                break;
-
-            case "layer": // layer[block_id,property_name,max_value,chance]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[3])) {
-                    ResourceLocation blockId = ResourceLocation.parse(argArray[0]);
-                    Block block = ForgeRegistries.BLOCKS.getValue(blockId);
-                    if (block == null) break;
-
-                    BlockState currentState = world.getBlockState(targetPos);
-                    String propertyName = argArray[1];
-                    int maxValue = Integer.parseInt(argArray[2]);
-
-                    if (currentState.is(block)) {
-                        currentState.getProperties().stream()
-                                .filter(p -> p.getName().equals(propertyName) && p instanceof net.minecraft.world.level.block.state.properties.IntegerProperty)
-                                .map(p -> (net.minecraft.world.level.block.state.properties.IntegerProperty) p)
-                                .findFirst()
-                                .ifPresent(prop -> {
-                                    int currentVal = currentState.getValue(prop);
-                                    if (currentVal < maxValue) {
-                                        world.setBlockAndUpdate(targetPos, currentState.setValue(prop, currentVal + 1));
-                                    }
-                                });
-                    }
-                    else if (world.isEmptyBlock(targetPos) && block.defaultBlockState().canSurvive(world, targetPos)) {
-                        world.setBlockAndUpdate(targetPos, block.defaultBlockState());
-                    }
-                }
-                break;
-
-            case "freeze":
-                if (checkWhitelist(player, "player") && player.getTicksFrozen() < Integer.parseInt(argArray[0])) {
-                    player.setTicksFrozen(player.getTicksFrozen() + 5);
-                }
-                break;
-
-            case "fire": // fire[chance]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[0])) {
-                    if (world.isEmptyBlock(targetPos)) world.setBlockAndUpdate(targetPos, Blocks.FIRE.defaultBlockState());
-                }
-                break;
-
-            case "velocity": // velocity[x,y,z]
-                player.push(Double.parseDouble(argArray[0]), Double.parseDouble(argArray[1]), Double.parseDouble(argArray[2]));
-                player.hurtMarked = true;
-                break;
-
-            case "extinguish":
-                if (player.isOnFire()) player.clearFire();
-                break;
-
-            case "command": // command[chance(optional)]
-                if (argArray.length > 0) {
-                    if (world.random.nextFloat() < Float.parseFloat(argArray[0])) {
-                        world.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack().withPermission(4).withSuppressedOutput(), argArray[0]);
-                    }
-                } else {
-                    world.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack().withPermission(4).withSuppressedOutput(), argArray[0]);
-                }
-                break;
-
-            case "hydrate": // hydrate[radius,chance]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[1])) {
-                    int rad = Integer.parseInt(argArray[0]);
-                    BlockPos.betweenClosed(targetPos.offset(-rad, -1, -rad), targetPos.offset(rad, 1, rad)).forEach(bp -> {
-                        BlockState state = world.getBlockState(bp);
-                        if (state.is(Blocks.FARMLAND)) {
-                            world.setBlockAndUpdate(bp, state.setValue(net.minecraft.world.level.block.FarmBlock.MOISTURE, 7));
-                        }
-                    });
-                }
-                break;
-
-            case "bee_hive": // bee_hive[radius] -> Forces bees into hives
-                world.getEntitiesOfClass(net.minecraft.world.entity.animal.Bee.class, new net.minecraft.world.phys.AABB(targetPos).inflate(Double.parseDouble(argArray[0]))).forEach(bee -> {
-                    if (bee.getHivePos() != null) {
-                        bee.setStayOutOfHiveCountdown(0);
-                    }
-                });
-                break;
-
-            case "water_animal_buffer": // water_animal_buffer[radius] -> Prevents dolphins/axolotls from drying out
-                world.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(targetPos).inflate(Double.parseDouble(argArray[0]))).forEach(e -> {
-                    if (e instanceof net.minecraft.world.entity.animal.axolotl.Axolotl || e instanceof net.minecraft.world.entity.animal.Dolphin) {
-                        e.setAirSupply(e.getMaxAirSupply());
-                    }
-                });
-                break;
-            case "damage_armor": // damage_armor[slot,amount,chance] -> e.g., damage_armor[chest,1,0.05]
-                if (world.random.nextFloat() < Float.parseFloat(argArray[2])) {
-                    EquipmentSlot slot = null;
-                    String inputSlot = argArray[0].toLowerCase();
-
-                    slot = switch (inputSlot) {
-                        case "head", "helmet" -> EquipmentSlot.HEAD;
-                        case "chest", "chestplate" -> EquipmentSlot.CHEST;
-                        case "legs", "leggings" -> EquipmentSlot.LEGS;
-                        case "feet", "boots" -> EquipmentSlot.FEET;
-                        default -> slot;
-                    };
-
-                    if (slot != null) {
-                        var stack = player.getItemBySlot(slot);
-                        if (!stack.isEmpty() && stack.isDamageableItem()) {
-                            int damageAmount = Integer.parseInt(argArray[1]);
-                            EquipmentSlot finalSlot = slot;
-                            stack.hurtAndBreak(damageAmount, player, (p) -> p.broadcastBreakEvent(finalSlot));
-                        }
-                    }
-                }
-                break;
-            case "none":
-                break;
+        else if (effect instanceof DamageEffect dmg) {
+            if (world.random.nextInt(dmg.chance()) == 0) {
+                player.hurt(DamageSource.GENERIC, dmg.damage());
+            }
         }
+
+        else if (effect instanceof RingBellEffect bell) {
+            if (world.random.nextInt(bell.chance()) == 0) {
+                world.playSound(null, targetPos,
+                        net.minecraft.sounds.SoundEvents.BELL_BLOCK,
+                        net.minecraft.sounds.SoundSource.BLOCKS,
+                        bell.volume(), bell.pitch());
+            }
+        }
+
+        else if (effect instanceof SummonEntityEffect summon) {
+            if (world.random.nextInt(summon.chance()) == 0) {
+                var entity = summon.entity().create(world);
+                if (entity != null) {
+                    summon.data().ifPresent(entity::load);
+                    entity.moveTo(Vec3.atBottomCenterOf(targetPos));
+                    world.addFreshEntity(entity);
+                }
+            }
+        }
+
+        else if (effect instanceof DamageArmorEffect armor) {
+            if (world.random.nextInt(armor.chance()) == 0) {
+                for (EquipmentSlot slot : armor.slots()) {
+                    var stack = player.getItemBySlot(slot);
+                    if (!stack.isEmpty() && stack.isDamageableItem()) {
+                        stack.hurtAndBreak(armor.damage(), player, (p) -> p.broadcastBreakEvent(slot));
+                    }
+                }
+            }
+        }
+
+        else if (effect instanceof CommandEffect cmd) {
+            if (world.random.nextInt(cmd.chance()) == 0) {
+                world.getServer().getCommands().performPrefixedCommand(
+                        player.createCommandSourceStack().withPermission(4).withSuppressedOutput(),
+                        cmd.command()
+                );
+            }
+        }
+
+        else if (effect instanceof FreezeEffect freeze) {
+            if (player.getTicksFrozen() < freeze.freeze_ticks()) {
+                player.setTicksFrozen(player.getTicksFrozen() + 5);
+            }
+        }
+
+//        else if (effect instanceof WetEntitiesEffect) {
+//            if (player.isOnFire()) {
+//                player.clearFire();
+//            }
+//
+//            if (world.getGameTime() % 20 == 0) {
+//                if (player.getType() == EntityType.ENDERMAN || player.getType() == EntityType.BLAZE) {
+//                    player.hurt(DamageSource.DROWN, 1.0F);
+//                }
+//            }
+//
+//            int radius = 16;
+//            world.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(radius)).forEach(entity -> {
+//                if (WeatherSafetyHelper.isOutside(world, entity.blockPosition())) {
+//
+//                    if (entity.isOnFire()) {
+//                        entity.clearFire();
+//                    }
+//
+//                    if (world.getGameTime() % 20 == 0) {
+//                        if (entity.getType() == EntityType.ENDERMAN || entity.getType() == EntityType.BLAZE) {
+//                            entity.hurt(DamageSource.DROWN, 1.0F);
+//                        }
+//                    }
+//
+//                    if (entity instanceof WaterAnimal || entity instanceof Axolotl) {
+//                        entity.setAirSupply(entity.getMaxAirSupply());
+//                    }
+//                }
+//            });
+//        } else if (effect instanceof ExtinguishBlocksEffect extinguish) {
+//            BlockState state = world.getBlockState(targetPos);
+//
+//            if (state.is(Blocks.FIRE)) {
+//                BlockPos below = targetPos.below();
+//                boolean isNetherrack = world.getBlockState(below).is(Blocks.NETHERRACK);
+//
+//                if (extinguish.netherrack() || !isNetherrack) {
+//                    world.removeBlock(targetPos, false);
+//                    world.levelEvent(null, 1009, targetPos, 0);
+//                }
+//            }
+//        }
     }
 
     private static boolean checkWhitelist(LivingEntity entity, String key) {

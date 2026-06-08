@@ -1,16 +1,15 @@
 {
-  "biomes": ["minecraft:jungle"],
+  "biomes": ["minecraft:desert"],
   "precipitation": {
-    "texture": "high_voltage:tropical_rain",
-    "tint": "#FFFFFF",
+    "texture": "high_voltage:textures/environment/dust.png",
+    "tint": "#E3BC82",
     "vx": 1.0,
     "vy": 4.0,
-    "does_rain": true,
-    "land_particle": "minecraft:rain",
-    "land_sound": true
+    "does_rain": false,
+    "land_sound": false
   },
   "fog": {
-    "color": "#224422",
+    "color": "#E3BC82",
     "start": 10,
     "end": 30
   },
@@ -21,12 +20,7 @@
       "type": "high_voltage:ring_bell",
       "volume": 1.0,
       "pitch": 0.5,
-      "chance": 1000
-    },
-    {
-      "type": "high_voltage:command",
-      "run": "give @a minecraft:diamond ",
-      "chance": 10
+      "chance": 100
     },
     {
       "type": "high_voltage:damage_armor",

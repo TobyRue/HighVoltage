@@ -1,5 +1,7 @@
 package io.github.tobyrue.high_voltage;
 
+import io.github.tobyrue.high_voltage.data.WeatherProfile;
+import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
@@ -47,30 +49,55 @@ public class ClientEvents {
         if (mc.level == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
-        WeatherManager.WeatherProfile profile = WeatherManager.getCurrentProfile(biome);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
 
         float targetR = event.getRed();
         float targetG = event.getGreen();
         float targetB = event.getBlue();
 
-        if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition()) && profile != null) {
-            targetR = (float) (profile.fogColor() >> 16 & 255) / 255.0F;
-            targetG = (float) (profile.fogColor() >> 8 & 255) / 255.0F;
-            targetB = (float) (profile.fogColor() & 255) / 255.0F;
+        if (profile.fog() != null) {
+            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+                targetR = (float) (profile.fog().color() >> 16 & 255) / 255.0F;
+                targetG = (float) (profile.fog().color() >> 8 & 255) / 255.0F;
+                targetB = (float) (profile.fog().color() & 255) / 255.0F;
+            }
+
+            if (!initialized) {
+                curR = targetR;
+                curG = targetG;
+                curB = targetB;
+                initialized = true;
+            }
+
+            curR += (targetR - curR) * FOG_CHANGE_SPEED;
+            curG += (targetG - curG) * FOG_CHANGE_SPEED;
+            curB += (targetB - curB) * FOG_CHANGE_SPEED;
+
+            event.setRed(curR);
+            event.setGreen(curG);
+            event.setBlue(curB);
+        } else {
+            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+                targetR = (float) (biome.get().getFogColor() >> 16 & 255) / 255.0F;
+                targetG = (float) (biome.get().getFogColor() >> 8 & 255) / 255.0F;
+                targetB = (float) (biome.get().getFogColor() & 255) / 255.0F;
+            }
+
+            if (!initialized) {
+                curR = targetR;
+                curG = targetG;
+                curB = targetB;
+                initialized = true;
+            }
+
+            curR += (targetR - curR) * FOG_CHANGE_SPEED;
+            curG += (targetG - curG) * FOG_CHANGE_SPEED;
+            curB += (targetB - curB) * FOG_CHANGE_SPEED;
+
+            event.setRed(curR);
+            event.setGreen(curG);
+            event.setBlue(curB);
         }
-
-        if (!initialized) {
-            curR = targetR; curG = targetG; curB = targetB;
-            initialized = true;
-        }
-
-        curR += (targetR - curR) * FOG_CHANGE_SPEED;
-        curG += (targetG - curG) * FOG_CHANGE_SPEED;
-        curB += (targetB - curB) * FOG_CHANGE_SPEED;
-
-        event.setRed(curR);
-        event.setGreen(curG);
-        event.setBlue(curB);
     }
 
     @SubscribeEvent
@@ -79,24 +106,42 @@ public class ClientEvents {
         if (mc.level == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
-        WeatherManager.WeatherProfile profile = WeatherManager.getCurrentProfile(biome);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
 
         float targetStart = event.getNearPlaneDistance();
         float targetEnd = event.getFarPlaneDistance();
 
-        if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition()) && profile != null) {
-            targetStart = profile.fogStart();
-            targetEnd = profile.fogEnd();
-        }
+        if (profile.fog() != null) {
 
-        curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
-        curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
+            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+                targetStart = profile.fog().start();
+                targetEnd = profile.fog().end();
+            }
 
-        event.setNearPlaneDistance(curStart);
-        event.setFarPlaneDistance(curEnd);
+            curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
+            curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
 
-        if (mc.level.isThundering() || Math.abs(curEnd - targetEnd) > 0.1f) {
-            event.setCanceled(true);
+            event.setNearPlaneDistance(curStart);
+            event.setFarPlaneDistance(curEnd);
+
+            if (mc.level.isThundering() || Math.abs(curEnd - targetEnd) > 0.1f) {
+                event.setCanceled(true);
+            }
+        } else {
+            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+                targetStart = 8;
+                targetEnd = 64;
+            }
+
+            curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
+            curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
+
+            event.setNearPlaneDistance(curStart);
+            event.setFarPlaneDistance(curEnd);
+
+            if (mc.level.isThundering() || Math.abs(curEnd - targetEnd) > 0.1f) {
+                event.setCanceled(true);
+            }
         }
     }
 }

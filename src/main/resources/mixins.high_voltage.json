@@ -6,6 +6,7 @@
   "refmap": "high_voltage.refmap.json",
   "mixins": [
     "BiomeColorMixin",
+    "IsRainingMixin",
     "LightningSpawnMixin",
     "VisibilityMixin"
   ],

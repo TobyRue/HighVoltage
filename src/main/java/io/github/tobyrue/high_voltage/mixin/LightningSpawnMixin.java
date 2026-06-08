@@ -3,6 +3,8 @@ package io.github.tobyrue.high_voltage.mixin;
 import com.google.common.collect.Lists;
 import io.github.tobyrue.high_voltage.ServerConfig;
 import io.github.tobyrue.high_voltage.WeatherManager;
+import io.github.tobyrue.high_voltage.data.WeatherProfile;
+import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +31,7 @@ public abstract class LightningSpawnMixin {
         for (ServerPlayer player : this.players) {
             BlockPos pos = player.blockPosition();
             var biome = getLevel().getBiome(pos);
-            return WeatherManager.ServerWeatherManager.getCurrentServerProfile(biome).lightningChance();
+            return WeatherProfileLoader.getProfileForBiomeWithFallback(biome).baseLightningChance();
         }
         return constant;
     }

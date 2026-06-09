@@ -1,5 +1,6 @@
 package io.github.tobyrue.high_voltage;
 
+import io.github.tobyrue.high_voltage.data.MyNetworkHandler;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
@@ -50,7 +51,7 @@ public class ModEvents {
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            
+
             MinecraftServer server = event.getServer();
             if (server == null) return;
 
@@ -61,9 +62,8 @@ public class ModEvents {
                     float rain = overworld.getRainLevel(1.0F);
                     boolean thunder = overworld.isThundering();
                     WeatherSyncPacket packet = new WeatherSyncPacket(rain, thunder);
-
                     server.getPlayerList().getPlayers().forEach(player -> {
-                        NetworkHandler.CHANNEL.sendTo(
+                        MyNetworkHandler.CHANNEL.sendTo(
                                 packet,
                                 player.connection.connection,
                                 NetworkDirection.PLAY_TO_CLIENT

@@ -26,7 +26,7 @@ public class WeatherSyncPacket {
 
     public static void handle(WeatherSyncPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            WeatherRendererMixin.setGlobalWeather(msg.rainLevel, msg.isThundering);
+            WeatherSyncHandler.setGlobalWeather(msg.rainLevel, msg.isThundering);
         });
         ctx.get().setPacketHandled(true);
     }

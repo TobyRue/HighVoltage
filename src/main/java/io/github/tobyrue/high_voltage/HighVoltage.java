@@ -3,6 +3,7 @@ package io.github.tobyrue.high_voltage;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.JsonOps;
+import io.github.tobyrue.high_voltage.data.MyNetworkHandler;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.effects.ModWeatherEffects;
@@ -67,6 +68,12 @@ public class HighVoltage {
         modEventBus.addListener(WeatherProfile::createRegistry);
 
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListener);
+
+        modEventBus.addListener(this::setup);
+    }
+
+    private void setup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(MyNetworkHandler::register);
     }
 
     public void onAddReloadListener(AddReloadListenerEvent event) {

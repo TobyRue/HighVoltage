@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
+import io.github.tobyrue.high_voltage.data.WeatherSyncHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -49,19 +50,9 @@ public class WeatherRendererMixin {
     @Shadow private int ticks;
 
     @Unique
-    private static float high_voltage$globalRainLevel = 0.0f;
-    @Unique
-    private static boolean high_voltage$globalIsThundering = false;
-
-    public static void setGlobalWeather(float rain, boolean thunder) {
-        high_voltage$globalRainLevel = rain;
-        high_voltage$globalIsThundering = thunder;
-    }
-
-    @Unique
     private WeatherProfile high_voltage$getEffectiveProfile() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || !high_voltage$globalIsThundering) return null;
+        if (mc.level == null || !WeatherSyncHandler.globalIsThundering) return null;
 
         BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
         Holder<Biome> biomeHolder = mc.level.getBiome(pos);
@@ -227,8 +218,8 @@ public class WeatherRendererMixin {
     )
     private Biome.Precipitation high_voltage$forceWeatherWithAlphaCheck(Biome instance) {
         Minecraft mc = Minecraft.getInstance();
-        float rainLevel = high_voltage$globalRainLevel;
-        if (rainLevel > 0.0F && high_voltage$getEffectiveProfile() != null && high_voltage$globalIsThundering) {
+        float rainLevel = WeatherSyncHandler.globalRainLevel;
+        if (rainLevel > 0.0F && high_voltage$getEffectiveProfile() != null && WeatherSyncHandler.globalIsThundering) {
             return Biome.Precipitation.RAIN;
         }
         return instance.getPrecipitation();

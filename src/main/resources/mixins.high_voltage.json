@@ -9,7 +9,8 @@
     "IsRainingMixin",
     "LayerTickMixin",
     "LightningSpawnMixin",
-    "VisibilityMixin"
+    "VisibilityMixin",
+    "WeatherCommandMixin"
   ],
   "client": [
     "WeatherRendererMixin"

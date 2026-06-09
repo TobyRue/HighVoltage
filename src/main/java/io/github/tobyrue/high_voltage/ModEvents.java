@@ -2,6 +2,7 @@ package io.github.tobyrue.high_voltage;
 
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
+import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
 import io.github.tobyrue.high_voltage.data.effects.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -9,6 +10,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -23,12 +25,14 @@ import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CauldronBlock;
 import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -36,20 +40,56 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 @Mod.EventBusSubscriber(modid = HighVoltage.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ModEvents {
 
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            
+            MinecraftServer server = event.getServer();
+            if (server == null) return;
+
+            if (server.getTickCount() % 20 == 0) {
+                ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+
+                if (overworld != null) {
+                    float rain = overworld.getRainLevel(1.0F);
+                    boolean thunder = overworld.isThundering();
+                    WeatherSyncPacket packet = new WeatherSyncPacket(rain, thunder);
+
+                    server.getPlayerList().getPlayers().forEach(player -> {
+                        NetworkHandler.CHANNEL.sendTo(
+                                packet,
+                                player.connection.connection,
+                                NetworkDirection.PLAY_TO_CLIENT
+                        );
+                    });
+                }
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
+        if (event.phase == TickEvent.Phase.START && event.level instanceof ServerLevel nether) {
+            if (nether.dimension().equals(Level.NETHER)) {
+                ServerLevel overworld = nether.getServer().getLevel(Level.OVERWORLD);
+                if (overworld != null) {
+                    nether.setRainLevel(overworld.getRainLevel(1.0F));
+                    nether.setThunderLevel(overworld.getThunderLevel(1.0F));
+                }
+            }
+        }
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel world) {
             if (world.isThundering()) {
                 for (ServerPlayer player : world.players()) {
                     Holder<Biome> biome = world.getBiome(player.blockPosition());
-                    WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
-
+                    WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, world);
                     BonusLightningEffect effect = WeatherProfileLoader.getEffect(profile, ModWeatherEffects.PLAYER_BONUS_LIGHTNING);
                     if (effect == null) continue;
 
@@ -85,7 +125,7 @@ public class ModEvents {
         // && WeatherSafetyHelper.isOutside(world, playerPos)
         if (world.isThundering()) {
             var biome = world.getBiome(playerPos);
-            var profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
+            var profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, world);
 
             int r = 16;
             BlockPos targetPos = null;
@@ -168,7 +208,6 @@ public class ModEvents {
                 player.setTicksFrozen(player.getTicksFrozen() + 5);
             }
         }
-
 //        else if (effect instanceof WetEntitiesEffect) {
 //            if (player.isOnFire()) {
 //                player.clearFire();

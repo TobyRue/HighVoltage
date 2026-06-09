@@ -3,16 +3,14 @@ package io.github.tobyrue.high_voltage.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import io.github.tobyrue.high_voltage.HighVoltage;
 import io.github.tobyrue.high_voltage.data.effects.FreezeEffect;
-import io.github.tobyrue.high_voltage.data.effects.ModWeatherEffects;
-import io.github.tobyrue.high_voltage.data.effects.WetEntitiesEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.data.worldgen.DimensionTypes;
+import net.minecraft.nbt.TagTypes;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -20,7 +18,10 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -44,7 +45,7 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
             ),
 
             new WeatherProfile.Fog(0x8E8945, 20, 50),
-            List.of(new WetEntitiesEffect()),
+            List.of(),
 
             10000
     );
@@ -143,6 +144,25 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
         }
         return biome.get().getPrecipitation().equals(Biome.Precipitation.NONE) ? DEFAULT_NONE : (biome.get().getBaseTemperature() < 0.15 ? DEFAULT_SNOW : DEFAULT_RAIN);
     }
+
+    public static WeatherProfile getProfileForBiomeWithFallback(Holder<Biome> biome, Level level) {
+        ResourceLocation targetId = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        for (WeatherProfile profile : PROFILES.values()) {
+            boolean matches = profile.biomes().stream().anyMatch(holder ->
+                    holder.unwrapKey().map(key -> key.location().equals(targetId)).orElse(false)
+            );
+
+            if (matches) return (Optional.of(profile).orElse(level.dimension() != Level.OVERWORLD ? DEFAULT_NONE : biome.get().getPrecipitation().equals(Biome.Precipitation.NONE) ? DEFAULT_NONE : (biome.get().getBaseTemperature() < 0.15 ? DEFAULT_SNOW : DEFAULT_RAIN)));
+            var bound = profile.biomes().unwrap();
+            if (bound.left().isPresent()) {
+                if (biome.is(bound.left().get())) {
+                    return (Optional.of(profile).orElse(level.dimension() != Level.OVERWORLD ? DEFAULT_NONE : biome.get().getPrecipitation().equals(Biome.Precipitation.NONE) ? DEFAULT_NONE : (biome.get().getBaseTemperature() < 0.15 ? DEFAULT_SNOW : DEFAULT_RAIN)));
+                }
+            }
+        }
+        return level.dimension() != Level.OVERWORLD ? DEFAULT_NONE : (biome.get().getPrecipitation().equals(Biome.Precipitation.NONE) ? DEFAULT_NONE : (biome.get().getBaseTemperature() < 0.15 ? DEFAULT_SNOW : DEFAULT_RAIN));
+    }
+
     public static Optional<WeatherProfile.WeatherEffectType<?>> getEffectTypeById(ResourceLocation id) {
         return Optional.ofNullable(WeatherProfile.WeatherEffectType.REGISTRY.get().getValue(id));
     }

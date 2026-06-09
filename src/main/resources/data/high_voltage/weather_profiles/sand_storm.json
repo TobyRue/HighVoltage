@@ -1,10 +1,10 @@
 {
-  "biomes": ["minecraft:desert"],
+  "biomes": "#forge:is_desert",
   "precipitation": {
     "texture": "high_voltage:textures/environment/dust.png",
     "tint": "#E3BC82",
-    "vx": 1.0,
-    "vy": 4.0,
+    "vx": 2.0,
+    "vy": 0.33,
     "does_rain": false,
     "land_sound": false
   },

@@ -26,14 +26,11 @@ public class ModWeatherEffects {
     public static final RegistryObject<WeatherProfile.WeatherEffectType<HungerEffect>> HUNGER =
             EFFECTS.register("hunger", () -> new WeatherProfile.WeatherEffectType<>(HungerEffect.CODEC));
 
-    public static final RegistryObject<WeatherProfile.WeatherEffectType<WetEntitiesEffect>> WET_ENTITIES =
-            EFFECTS.register("wet_entities", () -> new WeatherProfile.WeatherEffectType<>(WetEntitiesEffect.CODEC));
-
     public static final RegistryObject<WeatherProfile.WeatherEffectType<FreezeEffect>> FREEZE =
             EFFECTS.register("freeze", () -> new WeatherProfile.WeatherEffectType<>(FreezeEffect.CODEC));
 
-    public static final RegistryObject<WeatherProfile.WeatherEffectType<ExtinguishBlocksEffect>> EXTINGUISH_BLOCKS =
-            EFFECTS.register("extinguish_blocks", () -> new WeatherProfile.WeatherEffectType<>(ExtinguishBlocksEffect.CODEC));
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<LayerEffect>> LAYER =
+            EFFECTS.register("layer", () -> new WeatherProfile.WeatherEffectType<>(LayerEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<BonusLightningEffect>> PLAYER_BONUS_LIGHTNING =
             EFFECTS.register("player_bonus_lightning", () -> new WeatherProfile.WeatherEffectType<>(BonusLightningEffect.CODEC));

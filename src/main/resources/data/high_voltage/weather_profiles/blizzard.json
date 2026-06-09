@@ -1,0 +1,33 @@
+{
+  "biomes": "#forge:is_cold/overworld",
+  "precipitation": {
+    "texture": "high_voltage:textures/environment/heavy_snow.png",
+    "tint": "#FFFFFF",
+    "vx": 2.0,
+    "vy": 2.0,
+    "acts_like_rain": true,
+    "land_particle": "minecraft:item_snowball",
+    "land_sound": false
+  },
+  "fog": {
+    "color": "#FFFFFF",
+    "start": 5,
+    "end": 40
+  },
+
+  "base_lightning_chance": 10000,
+  "effects": [
+    {
+      "type": "high_voltage:layer",
+      "block": "minecraft:snow",
+      "property": "layers",
+      "max_level": 8,
+      "noisy": true,
+      "chance": 50
+    },
+    {
+      "type": "high_voltage:freeze",
+      "freeze_ticks": 40
+    }
+  ]
+}

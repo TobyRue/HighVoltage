@@ -31,7 +31,7 @@ public abstract class LightningSpawnMixin {
         for (ServerPlayer player : this.players) {
             BlockPos pos = player.blockPosition();
             var biome = getLevel().getBiome(pos);
-            return WeatherProfileLoader.getProfileForBiomeWithFallback(biome).baseLightningChance();
+            return WeatherProfileLoader.getProfileForBiomeWithFallback(biome, player.getLevel()).baseLightningChance();
         }
         return constant;
     }

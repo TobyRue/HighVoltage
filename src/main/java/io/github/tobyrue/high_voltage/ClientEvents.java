@@ -28,19 +28,19 @@ public class ClientEvents {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && player.level.isThundering()) {
             Level world = player.level;
-
-            if (world.dimension() == Level.NETHER) {
-                for(int i = 0; i < 5; i++) {
-                    world.addParticle(ParticleTypes.FLAME,
-                            player.getX() + world.random.nextGaussian() * 10,
-                            player.getY() + world.random.nextGaussian() * 10,
-                            player.getZ() + world.random.nextGaussian() * 10, 0, 0.1, 0);
-                }
-            }
-
-            if (world.dimension() == Level.END && player.getY() < 0) {
-                world.addParticle(ParticleTypes.DRAGON_BREATH, player.getX(), player.getY(), player.getZ(), 0, 0, 0);
-            }
+//
+//            if (world.dimension() == Level.NETHER) {
+//                for(int i = 0; i < 5; i++) {
+//                    world.addParticle(ParticleTypes.FLAME,
+//                            player.getX() + world.random.nextGaussian() * 10,
+//                            player.getY() + world.random.nextGaussian() * 10,
+//                            player.getZ() + world.random.nextGaussian() * 10, 0, 0.1, 0);
+//                }
+//            }
+//
+//            if (world.dimension() == Level.END && player.getY() < 0) {
+//                world.addParticle(ParticleTypes.DRAGON_BREATH, player.getX(), player.getY(), player.getZ(), 0, 0, 0);
+//            }
         }
     }
     @SubscribeEvent
@@ -49,7 +49,7 @@ public class ClientEvents {
         if (mc.level == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
-        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, mc.level);
 
         float targetR = event.getRed();
         float targetG = event.getGreen();
@@ -106,7 +106,7 @@ public class ClientEvents {
         if (mc.level == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
-        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome,mc.level);
 
         float targetStart = event.getNearPlaneDistance();
         float targetEnd = event.getFarPlaneDistance();

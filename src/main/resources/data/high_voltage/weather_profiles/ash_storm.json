@@ -1,0 +1,21 @@
+{
+  "biomes": ["minecraft:basalt_deltas"],
+  "precipitation": {
+    "texture": "high_voltage:textures/environment/dust.png",
+    "tint": "#686868",
+    "vx": 2.0,
+    "vy": 0.33,
+    "acts_like_rain": true,
+    "land_sound": false
+  },
+  "fog": {
+    "color": "#686868",
+    "start": 5,
+    "end": 60
+  },
+
+  "base_lightning_chance": 2147483646,
+  "effects": [
+
+  ]
+}

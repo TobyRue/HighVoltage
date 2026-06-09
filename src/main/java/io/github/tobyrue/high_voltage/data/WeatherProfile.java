@@ -6,20 +6,15 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tobyrue.high_voltage.HighVoltage;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryCodecs;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.registries.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 public record WeatherProfile(
         HolderSet<Biome> biomes, //TODO FINISH?
@@ -73,7 +68,7 @@ public record WeatherProfile(
             int tint,
             float vx,
             float vy,
-            boolean does_rain,
+            boolean acts_like_rain,
             @Nullable ParticleType<?> particle,
             boolean sound
     ) {
@@ -84,11 +79,11 @@ public record WeatherProfile(
                         .forGetter(Precipitation::tint),
                 Codec.FLOAT.fieldOf("vx").forGetter(Precipitation::vx),
                 Codec.FLOAT.fieldOf("vy").forGetter(Precipitation::vy),
-                Codec.BOOL.optionalFieldOf("does_rain").forGetter(p -> Optional.ofNullable(p.does_rain)),
+                Codec.BOOL.optionalFieldOf("acts_like_rain").forGetter(p -> Optional.ofNullable(p.acts_like_rain)),
                 ForgeRegistries.PARTICLE_TYPES.getCodec().optionalFieldOf("land_particle").forGetter(p -> Optional.ofNullable(p.particle())),
                 Codec.BOOL.optionalFieldOf("land_sound").forGetter(p -> Optional.ofNullable(p.sound))
         ).apply(instance, (tex, tint, vx, vy, rain, part, snd) ->
-                new Precipitation(tex.orElse(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/none.png")), tint, vx, vy, rain.orElse(false), part.orElse(null), snd.orElse(false))));
+                new Precipitation(tex.orElse(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/none.png")), tint, vx, vy, rain.orElse(true), part.orElse(null), snd.orElse(false))));
     }
     public record Fog(int color, int start, int end) {
         public static final Codec<Fog> CODEC = RecordCodecBuilder.create(instance -> instance.group(

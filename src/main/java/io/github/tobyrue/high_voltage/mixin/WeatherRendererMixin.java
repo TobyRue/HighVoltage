@@ -1,15 +1,9 @@
 package io.github.tobyrue.high_voltage.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import io.github.tobyrue.high_voltage.HighVoltage;
-import io.github.tobyrue.high_voltage.WeatherManager;
+import com.mojang.blaze3d.vertex.*;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -18,29 +12,22 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BiomeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(LevelRenderer.class)
+@Debug(export = true)
 public class WeatherRendererMixin {
 //    @Unique
 //    private static final ResourceLocation SAND_STORM = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/sand_storm.png");
@@ -61,29 +48,35 @@ public class WeatherRendererMixin {
 
     @Shadow private int ticks;
 
+    @Unique
+    private static float high_voltage$globalRainLevel = 0.0f;
+    @Unique
+    private static boolean high_voltage$globalIsThundering = false;
 
+    public static void setGlobalWeather(float rain, boolean thunder) {
+        high_voltage$globalRainLevel = rain;
+        high_voltage$globalIsThundering = thunder;
+    }
 
     @Unique
     private WeatherProfile high_voltage$getEffectiveProfile() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || !mc.level.isThundering()) return null;
+        if (mc.level == null || !high_voltage$globalIsThundering) return null;
 
         BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
         Holder<Biome> biomeHolder = mc.level.getBiome(pos);
-        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
+        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder, mc.level);
     }
 
     @Redirect(
             method = "renderSnowAndRain",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z")
     )
-    private boolean high_voltage$textureAndColorSwap(Biome instance, BlockPos pos) {
-        Minecraft mc = Minecraft.getInstance();
-        Holder<Biome> biomeHolder = mc.level.getBiome(pos);
-        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
+    private boolean high_voltage$textureColorAndMotionSwap(Biome instance, BlockPos pos) {
+        this.high_voltage$currentProfile = high_voltage$getProfileAtPos(pos);
 
-        if ((profile.precipitation() != null)) {
-            ResourceLocation neededTexture = profile.precipitation().texture();
+        if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
+            ResourceLocation neededTexture = this.high_voltage$currentProfile.precipitation().texture();
 
             if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
                 Tesselator tesselator = Tesselator.getInstance();
@@ -93,7 +86,7 @@ public class WeatherRendererMixin {
                     tesselator.end();
                     RenderSystem.setShaderTexture(0, neededTexture);
 
-                    int tint = (profile != null) ? profile.precipitation().tint() : 0xFFFFFF;
+                    int tint = this.high_voltage$currentProfile.precipitation().tint();
                     float r = ((tint >> 16) & 0xFF) / 255f;
                     float g = ((tint >> 8) & 0xFF) / 255f;
                     float b = (tint & 0xFF) / 255f;
@@ -110,10 +103,13 @@ public class WeatherRendererMixin {
     @Inject(method = "renderSnowAndRain", at = @At("HEAD"))
     private void high_voltage$resetBatch(LightTexture p_109704_, float p_109705_, double p_109706_, double p_109707_, double p_109708_, CallbackInfo ci) {
         this.high_voltage$currentBatchTexture = null;
+        this.high_voltage$currentProfile = null;
     }
 
     @Unique
     private ResourceLocation high_voltage$currentBatchTexture = null;
+    @Unique
+    private WeatherProfile high_voltage$currentProfile = null;
 
     @Redirect(
             method = "renderSnowAndRain",
@@ -135,38 +131,12 @@ public class WeatherRendererMixin {
     }
 
 
-//    @Redirect(
-//            method = "renderSnowAndRain",
-//            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z")
-//    )
-
-
-//    @Redirect(
-//            method = "renderSnowAndRain",
-//            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V")
-//    )
-//    private void high_voltage$changeWeatherTexture(int unit, ResourceLocation original) {
-//        Minecraft mc = Minecraft.getInstance();
-//        BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
-//
-//        WeatherManager.WeatherProfile profile = high_voltage$getProfileAtPos(pos);
-//
-//        ResourceLocation textureToUse = original;
-//        if (profile != null) {
-//            textureToUse = profile.texture();
-//        }
-//
-//        RenderSystem.setShaderTexture(unit, textureToUse);
-//    }
-
-
     @Unique
     private WeatherProfile high_voltage$getProfileAtPos(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || !mc.level.isThundering()) return null;
-
         Holder<Biome> biomeHolder = mc.level.getBiome(pos);
-        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder);
+        return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder, mc.level);
     }
 
 
@@ -182,45 +152,83 @@ public class WeatherRendererMixin {
 
     @Redirect(
             method = "renderSnowAndRain",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;ticks:I")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getHeight(Lnet/minecraft/world/level/levelgen/Heightmap$Types;II)I")
     )
+    private int high_voltage$ignoreCeilingInDimensions(Level level, Heightmap.Types type, int x, int z) {
+        if (level.dimension().equals(Level.NETHER) || level.dimension().equals(Level.END)) {
+            return level.getMinBuildHeight();
+        }
 
-    private int high_voltage$speed(LevelRenderer instance) {
-        WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? (int)(this.ticks * profile.precipitation().vy()) : this.ticks;
+        return level.getHeight(type, x, z);
     }
 
+
+
+    // 1. RAIN VERTICAL SPEED (f2)
     @ModifyVariable(
             method = "renderSnowAndRain",
             at = @At(value = "STORE"),
             ordinal = 2
     )
 
-    private float high_voltage$vSpeed(float val) {
-        WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? val * profile.precipitation().vy() : val;
+    private float high_voltage$rainVerticalSpeed(float val) {
+        if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
+            return val * this.high_voltage$currentProfile.precipitation().vy();
+        }
+        return val;
     }
 
+    @Redirect(
+            method = "renderSnowAndRain",
+            at = @At(value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;uv(FF)Lcom/mojang/blaze3d/vertex/VertexConsumer;"),
+            slice = @Slice(
+                from = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z"),
+                to = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 1)
+            )
+    )
+    private VertexConsumer high_voltage$applyRainWind(VertexConsumer instance, float u, float v) {
+        if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
+            float windX = (this.ticks * 0.02f) * this.high_voltage$currentProfile.precipitation().vx();
+            return instance.uv(u + windX, v);
+        }
+        return instance.uv(u, v);
+    }
+
+    // 2. SNOW VERTICAL SPEED (f5)
     @ModifyVariable(
             method = "renderSnowAndRain",
             at = @At(value = "STORE"),
             ordinal = 3
     )
-    private float high_voltage$hWind(float val) {
-        WeatherProfile profile = high_voltage$getEffectiveProfile();
-        return (profile != null) ? val + profile.precipitation().vx() : val;
+    private float high_voltage$snowVerticalSpeed(float val) {
+        if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
+            return val * this.high_voltage$currentProfile.precipitation().vy();
+        }
+        return val;
     }
 
+    // 3. SNOW HORIZONTAL DRIFT (f6)
+    @ModifyVariable(
+            method = "renderSnowAndRain",
+            at = @At(value = "STORE"),
+            ordinal = 4
+    )
+    private float high_voltage$snowHorizontalWind(float val) {
+        if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
+            return val * this.high_voltage$currentProfile.precipitation().vx();
+        }
+        return val;
+    }
 
     @Redirect(
             method = "renderSnowAndRain",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getPrecipitation()Lnet/minecraft/world/level/biome/Biome$Precipitation;")
     )
-    private Biome.Precipitation high_voltage$forceDesertWeather(Biome instance) {
+    private Biome.Precipitation high_voltage$forceWeatherWithAlphaCheck(Biome instance) {
         Minecraft mc = Minecraft.getInstance();
-        BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
-
-        if (high_voltage$getEffectiveProfile() != null && high_voltage$getEffectiveProfile().precipitation() != null) {
+        float rainLevel = high_voltage$globalRainLevel;
+        if (rainLevel > 0.0F && high_voltage$getEffectiveProfile() != null && high_voltage$globalIsThundering) {
             return Biome.Precipitation.RAIN;
         }
         return instance.getPrecipitation();

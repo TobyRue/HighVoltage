@@ -14,6 +14,9 @@ public class ModWeatherEffects {
     public static final RegistryObject<WeatherProfile.WeatherEffectType<RingBellEffect>> RING_BELL =
             EFFECTS.register("ring_bell", () -> new WeatherProfile.WeatherEffectType<>(RingBellEffect.CODEC));
 
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<PlaySoundEffect>> PLAY_SOUND =
+            EFFECTS.register("play_sound", () -> new WeatherProfile.WeatherEffectType<>(PlaySoundEffect.CODEC));
+
     public static final RegistryObject<WeatherProfile.WeatherEffectType<DamageArmorEffect>> DAMAGE_ARMOR =
             EFFECTS.register("damage_armor", () -> new WeatherProfile.WeatherEffectType<>(DamageArmorEffect.CODEC));
 
@@ -32,6 +35,15 @@ public class ModWeatherEffects {
     public static final RegistryObject<WeatherProfile.WeatherEffectType<LayerEffect>> LAYER =
             EFFECTS.register("layer", () -> new WeatherProfile.WeatherEffectType<>(LayerEffect.CODEC));
 
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<IgniteEffect>> IGNITE =
+            EFFECTS.register("ignite", () -> new WeatherProfile.WeatherEffectType<>(IgniteEffect.CODEC));
+
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<VelocityEffect>> VELOCITY =
+            EFFECTS.register("velocity", () -> new WeatherProfile.WeatherEffectType<>(VelocityEffect.CODEC));
+
     public static final RegistryObject<WeatherProfile.WeatherEffectType<BonusLightningEffect>> PLAYER_BONUS_LIGHTNING =
             EFFECTS.register("player_bonus_lightning", () -> new WeatherProfile.WeatherEffectType<>(BonusLightningEffect.CODEC));
+
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<StatusEffectEffect>> STATUS_EFFECT =
+            EFFECTS.register("status_effect", () -> new WeatherProfile.WeatherEffectType<>(StatusEffectEffect.CODEC));
 }

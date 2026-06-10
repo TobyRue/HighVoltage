@@ -17,12 +17,14 @@ import java.util.List;
 import java.util.Optional;
 
 public record WeatherProfile(
-        HolderSet<Biome> biomes, //TODO FINISH?
+        HolderSet<Biome> biomes,
         @Nullable Precipitation precipitation,
         @Nullable Fog fog,
-        List<WeatherEffect> effects, //TODO FINISH WeatherEffect
+        List<WeatherEffect> effects,
         int baseLightningChance
 ) {
+
+
     public static final ResourceKey<Registry<WeatherProfile>> RESOURCE_KEY =
             ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "weather_profile"));
 
@@ -39,11 +41,11 @@ public record WeatherProfile(
             Biome.LIST_CODEC.fieldOf("biomes").forGetter(WeatherProfile::biomes),
             Precipitation.CODEC.optionalFieldOf("precipitation").forGetter(wp -> Optional.ofNullable(wp.precipitation())),
             Fog.CODEC.optionalFieldOf("fog").forGetter(wp -> Optional.ofNullable(wp.fog())),
-            WeatherEffect.CODEC.listOf().fieldOf("effects").forGetter(WeatherProfile::effects),
-            Codec.INT.fieldOf("base_lightning_chance").forGetter(WeatherProfile::baseLightningChance)
+            WeatherEffect.CODEC.listOf().optionalFieldOf("effects").forGetter(wp -> Optional.ofNullable(wp.effects)),
+            Codec.INT.optionalFieldOf("base_lightning_chance").forGetter(wp -> Optional.of(wp.baseLightningChance))
     ).apply(instance,
             (biomes, precip, fog, effects, chance) ->
-            new WeatherProfile(biomes, precip.orElse(null), fog.orElse(null), effects, chance)));
+            new WeatherProfile(biomes, precip.orElse(null), fog.orElse(null), effects.orElse(List.of()), chance.orElse(10000))));
 
 
     public static Integer hexStringToInt(final String hex) {

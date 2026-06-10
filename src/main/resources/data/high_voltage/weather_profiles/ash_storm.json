@@ -5,7 +5,7 @@
     "tint": "#686868",
     "vx": 2.0,
     "vy": 0.33,
-    "acts_like_rain": true,
+    "acts_like_rain": false,
     "land_sound": false
   },
   "fog": {
@@ -14,7 +14,7 @@
     "end": 60
   },
 
-  "base_lightning_chance": 2147483646,
+  "base_lightning_chance": -1,
   "effects": [
 
   ]

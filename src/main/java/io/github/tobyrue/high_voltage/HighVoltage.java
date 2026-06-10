@@ -55,11 +55,10 @@ public class HighVoltage {
         MinecraftForge.EVENT_BUS.register(this);
 //
         context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
-        context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
 
 
-        modEventBus.addListener(this::onConfigLoad);
-        modEventBus.addListener(this::onConfigReload);
+//        modEventBus.addListener(this::onConfigLoad);
+//        modEventBus.addListener(this::onConfigReload);
 
         WeatherProfile.WEATHER_PROFILE_REGISTRY.register(modEventBus);
 
@@ -86,21 +85,21 @@ public class HighVoltage {
         WeatherProfile.createRegistry(event);
     }
 
-    private void onConfigLoad(ModConfigEvent.Loading event) {
-        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
-            WeatherManager.parseConfig();
-            WeatherManager.ServerWeatherManager.parseConfig();
-            LOGGER.info("High Voltage: Weather profiles loaded.");
-        }
-    }
-
-    private void onConfigReload(ModConfigEvent.Reloading event) {
-        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
-            WeatherManager.parseConfig();
-            WeatherManager.ServerWeatherManager.parseConfig();
-            LOGGER.info("High Voltage: Weather profiles reloaded.");
-        }
-    }
+//    private void onConfigLoad(ModConfigEvent.Loading event) {
+//        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
+//            WeatherManager.parseConfig();
+//            WeatherManager.ServerWeatherManager.parseConfig();
+//            LOGGER.info("High Voltage: Weather profiles loaded.");
+//        }
+//    }
+//
+//    private void onConfigReload(ModConfigEvent.Reloading event) {
+//        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
+//            WeatherManager.parseConfig();
+//            WeatherManager.ServerWeatherManager.parseConfig();
+//            LOGGER.info("High Voltage: Weather profiles reloaded.");
+//        }
+//    }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
     }

@@ -5,7 +5,7 @@
     "tint": "#E3BC82",
     "vx": 2.0,
     "vy": 0.33,
-    "does_rain": false,
+    "acts_like_rain": false,
     "land_sound": false
   },
   "fog": {
@@ -17,16 +17,22 @@
   "base_lightning_chance": 10000,
   "effects": [
     {
-      "type": "high_voltage:ring_bell",
-      "volume": 1.0,
-      "pitch": 0.5,
+      "type": "high_voltage:damage_armor",
+      "slots": ["chest","head","feet","legs"],
+      "damage": 1,
+      "chance": 200
+    },
+    {
+      "type": "high_voltage:hunger",
+      "exhaustion": 1,
       "chance": 100
     },
     {
-      "type": "high_voltage:damage_armor",
-      "slots": ["chest","head"],
-      "damage": 1,
-      "chance": 100
+      "type": "high_voltage:status_effect",
+      "effect": "minecraft:slowness",
+      "amplifier": 1,
+      "duration": 300,
+      "chance": 1
     }
   ]
 }

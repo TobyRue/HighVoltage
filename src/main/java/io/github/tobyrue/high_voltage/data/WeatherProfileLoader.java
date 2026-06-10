@@ -44,7 +44,7 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
                     true
             ),
 
-            new WeatherProfile.Fog(0x8E8945, 20, 50),
+            new WeatherProfile.Fog(0x8E8945, 5, 30),
             List.of(),
 
             10000

@@ -4,12 +4,20 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tobyrue.high_voltage.HighVoltage;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+
 import java.util.List;
 
-public record DamageEffect(List<String> entityPredicate, float damage, int chance) implements WeatherProfile.WeatherEffect {
+public record DamageEffect(HolderSet<EntityType<?>> entityPredicate, float damage, int chance) implements WeatherProfile.WeatherEffect {
     public static final Codec<DamageEffect> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.listOf().fieldOf("entity_predicate").forGetter(DamageEffect::entityPredicate),
+            RegistryCodecs.homogeneousList(Registry.ENTITY_TYPE_REGISTRY)
+                    .fieldOf("entity_predicate")
+                    .forGetter(DamageEffect::entityPredicate),
             Codec.FLOAT.fieldOf("damage").forGetter(DamageEffect::damage),
             Codec.INT.fieldOf("chance").forGetter(DamageEffect::chance)
     ).apply(instance, DamageEffect::new));

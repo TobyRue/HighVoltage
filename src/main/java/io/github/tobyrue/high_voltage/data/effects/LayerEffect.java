@@ -10,6 +10,7 @@ public record LayerEffect(
         String propertyName,
         int maxLevel,
         boolean noisy,
+        boolean surface_only,
         int chance
 ) implements WeatherProfile.WeatherEffect {
 
@@ -18,6 +19,7 @@ public record LayerEffect(
             Codec.STRING.fieldOf("property").forGetter(LayerEffect::propertyName),
             Codec.INT.fieldOf("max_level").forGetter(LayerEffect::maxLevel),
             Codec.BOOL.fieldOf("noisy").forGetter(LayerEffect::noisy),
+            Codec.BOOL.optionalFieldOf("surface_only", true).forGetter(LayerEffect::surface_only),
             Codec.INT.fieldOf("chance").forGetter(LayerEffect::chance)
     ).apply(instance, LayerEffect::new));
 

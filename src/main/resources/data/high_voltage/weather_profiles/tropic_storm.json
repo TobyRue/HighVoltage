@@ -1,13 +1,13 @@
 {
-  "biomes": ["minecraft:jungle"],
+  "biomes": "#minecraft:is_jungle",
   "precipitation": {
     "texture": "high_voltage:textures/environment/heavy_rain.png",
-    "tint": "#FFFFFF",
-    "vx": 2.0,
-    "vy": 0.0,
-    "does_rain": true,
+    "tint": "#F0FFF0",
+    "vx": 1.0,
+    "vy": 5.0,
     "land_particle": "minecraft:rain",
-    "land_sound": true
+    "land_sound": true,
+    "acts_like_rain": true
   },
   "fog": {
     "color": "#224422",
@@ -15,24 +15,8 @@
     "end": 30
   },
 
-  "base_lightning_chance": 10000,
+  "base_lightning_chance": 7500,
   "effects": [
-    {
-      "type": "high_voltage:ring_bell",
-      "volume": 1.0,
-      "pitch": 0.5,
-      "chance": 1000
-    },
-    {
-      "type": "high_voltage:command",
-      "run": "give @a minecraft:diamond ",
-      "chance": 10
-    },
-    {
-      "type": "high_voltage:damage_armor",
-      "slots": ["chest","head"],
-      "damage": 1,
-      "chance": 100
-    }
+
   ]
 }

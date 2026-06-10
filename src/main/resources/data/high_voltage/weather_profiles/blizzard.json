@@ -28,6 +28,13 @@
     {
       "type": "high_voltage:freeze",
       "freeze_ticks": 40
+    },
+    {
+      "type": "high_voltage:status_effect",
+      "effect": "minecraft:slowness",
+      "amplifier": 0,
+      "duration": 200,
+      "chance": 1
     }
   ]
 }

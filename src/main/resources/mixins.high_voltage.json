@@ -7,7 +7,7 @@
   "mixins": [
     "BiomeColorMixin",
     "IsRainingMixin",
-    "LayerTickMixin",
+    "ChunkTickMixin",
     "LightningSpawnMixin",
     "VisibilityMixin",
     "WeatherCommandMixin"

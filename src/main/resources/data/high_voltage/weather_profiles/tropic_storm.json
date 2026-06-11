@@ -17,6 +17,32 @@
 
   "base_lightning_chance": 7500,
   "effects": [
-
+    {
+      "type": "high_voltage:disable_elytra"
+    },
+    {
+      "type": "high_voltage:damage",
+      "damage": 2,
+      "entity_predicate": [
+        "minecraft:boat",
+        "minecraft:chest_boat"
+      ],
+      "chance": 10
+    },
+    {
+      "type": "high_voltage:player_bonus_lightning",
+      "radius": 2,
+      "chance": 750
+    },
+    {
+      "type": "high_voltage:ring_bell",
+      "radius": 32,
+      "chance": 100
+    },
+    {
+      "type": "high_voltage:fill_cauldron",
+      "fluid": "water",
+      "chance": 1
+    }
   ]
 }

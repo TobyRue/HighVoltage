@@ -15,7 +15,7 @@
     "end": 40
   },
 
-  "base_lightning_chance": 10000,
+  "base_lightning_chance": 100000,
   "effects": [
     {
       "type": "high_voltage:layer",
@@ -27,13 +27,14 @@
     },
     {
       "type": "high_voltage:freeze",
-      "freeze_ticks": 40
+      "freeze_ticks": 60
     },
     {
-      "type": "high_voltage:status_effect",
-      "effect": "minecraft:slowness",
-      "amplifier": 0,
-      "duration": 200,
+      "type": "high_voltage:disable_sprinting"
+    },
+    {
+      "type": "high_voltage:fill_cauldron",
+      "fluid": "snow",
       "chance": 1
     }
   ]

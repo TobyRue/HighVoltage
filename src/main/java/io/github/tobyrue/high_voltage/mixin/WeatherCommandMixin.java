@@ -40,7 +40,6 @@ public class WeatherCommandMixin {
             float rain = overworld.getRainLevel(1.0F);
             boolean thunder = overworld.isThundering();
             WeatherSyncPacket packet = new WeatherSyncPacket(rain, thunder);
-            System.out.println(thunder);
             source.getServer().getPlayerList().getPlayers().forEach(player -> {
                 MyNetworkHandler.CHANNEL.sendTo(
                         packet,
@@ -59,7 +58,6 @@ public class WeatherCommandMixin {
             float rain = overworld.getRainLevel(1.0F);
             boolean thunder = overworld.isThundering();
             WeatherSyncPacket packet = new WeatherSyncPacket(rain, thunder);
-            System.out.println(thunder);
             source.getServer().getPlayerList().getPlayers().forEach(player -> {
                 MyNetworkHandler.CHANNEL.sendTo(
                         packet,

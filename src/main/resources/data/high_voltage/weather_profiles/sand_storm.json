@@ -14,7 +14,7 @@
     "end": 30
   },
 
-  "base_lightning_chance": 10000,
+  "base_lightning_chance": 100000,
   "effects": [
     {
       "type": "high_voltage:damage_armor",
@@ -28,11 +28,7 @@
       "chance": 100
     },
     {
-      "type": "high_voltage:status_effect",
-      "effect": "minecraft:slowness",
-      "amplifier": 1,
-      "duration": 300,
-      "chance": 1
+      "type": "high_voltage:disable_sprinting"
     }
   ]
 }

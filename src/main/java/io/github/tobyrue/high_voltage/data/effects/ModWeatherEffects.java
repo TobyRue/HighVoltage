@@ -9,7 +9,7 @@ public class ModWeatherEffects {
             WeatherProfile.WeatherEffectType.WEATHER_EFFECT_TYPES;
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<CommandEffect>> COMMAND =
-            EFFECTS.register("command", () -> new WeatherProfile.WeatherEffectType<>(CommandEffect.CODEC));
+            EFFECTS.register("run", () -> new WeatherProfile.WeatherEffectType<>(CommandEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<RingBellEffect>> RING_BELL =
             EFFECTS.register("ring_bell", () -> new WeatherProfile.WeatherEffectType<>(RingBellEffect.CODEC));
@@ -43,6 +43,15 @@ public class ModWeatherEffects {
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<BonusLightningEffect>> PLAYER_BONUS_LIGHTNING =
             EFFECTS.register("player_bonus_lightning", () -> new WeatherProfile.WeatherEffectType<>(BonusLightningEffect.CODEC));
+
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<DisableElytraEffect>> DISABLE_ELYTRA =
+            EFFECTS.register("disable_elytra", () -> new WeatherProfile.WeatherEffectType<>(DisableElytraEffect.CODEC));
+
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<DisableSprintingEffect>> DISABLE_SPRINTING =
+            EFFECTS.register("disable_sprinting", () -> new WeatherProfile.WeatherEffectType<>(DisableSprintingEffect.CODEC));
+
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<FillCauldronEffect>> FILL_CAULDRON =
+            EFFECTS.register("fill_cauldron", () -> new WeatherProfile.WeatherEffectType<>(FillCauldronEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<StatusEffectEffect>> STATUS_EFFECT =
             EFFECTS.register("status_effect", () -> new WeatherProfile.WeatherEffectType<>(StatusEffectEffect.CODEC));

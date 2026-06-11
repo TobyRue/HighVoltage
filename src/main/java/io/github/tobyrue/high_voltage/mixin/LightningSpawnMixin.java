@@ -1,10 +1,7 @@
 package io.github.tobyrue.high_voltage.mixin;
 
 import com.google.common.collect.Lists;
-import io.github.tobyrue.high_voltage.ServerConfig;
-import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

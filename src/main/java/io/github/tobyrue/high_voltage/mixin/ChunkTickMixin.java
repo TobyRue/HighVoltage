@@ -9,12 +9,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -23,6 +27,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(ServerLevel.class)
 public class ChunkTickMixin {
@@ -49,8 +57,12 @@ public class ChunkTickMixin {
                     high_voltage$handleLayeringExecution(world, x, z, layerEffect);
                 }
             } else if (effect instanceof RingBellEffect bellEffect) {
-                if (world.random.nextInt(bellEffect.chance()) == 0) {
-                    high_voltage$processBellRing(world, biomeCheckPos, bellEffect);
+                List<BlockPos> validBells = high_voltage$scanChunkForBlocks(world, chunk, false, state ->
+                        state.getBlock() instanceof net.minecraft.world.level.block.BellBlock
+                );
+                if (!validBells.isEmpty() && world.random.nextInt(bellEffect.chance()) == 0) {
+                    BlockPos chosenBell = validBells.get(world.random.nextInt(validBells.size()));
+                    high_voltage$processBellRing(world, chosenBell, bellEffect);
                 }
             } else if (effect instanceof IgniteEffect igniteEffect) {
                 if (world.random.nextInt(igniteEffect.chance()) == 0) {
@@ -68,12 +80,107 @@ public class ChunkTickMixin {
                 if (world.random.nextInt(statusEffect.chance()) == 0) {
                     high_voltage$processStatusEffect(world, chunk, statusEffect);
                 }
+            } else if (effect instanceof FillCauldronEffect fillEffect) {
+                List<BlockPos> validCauldrons = high_voltage$scanChunkForBlocks(world, chunk, fillEffect.surface_only(), state ->
+                        state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON) ||
+                                state.is(Blocks.LAVA_CAULDRON) || state.is(Blocks.POWDER_SNOW_CAULDRON)
+                );
+                if (!validCauldrons.isEmpty() && world.random.nextInt(fillEffect.chance()) == 0) {
+                    BlockPos chosenCauldron = validCauldrons.get(world.random.nextInt(validCauldrons.size()));
+                    high_voltage$processCauldronFill(world, chosenCauldron, fillEffect.fluid());
+                }
             }
         }
     }
+
+
+//        @Unique
+//        private Optional<BlockPos> high_voltage$(ServerLevel world, LevelChunk chunk, boolean surfaceOnly, java.util.function.Predicate<BlockState> stateFilter) {
+//
+//        }
+    
+
+
+
+
+    /**
+     * Scans a chunk's columns to locate matching block states based on a dynamic filter predicate.
+     */
+    @Unique
+    private List<BlockPos> high_voltage$scanChunkForBlocks(ServerLevel world, LevelChunk chunk, boolean surfaceOnly, java.util.function.Predicate<BlockState> stateFilter) {
+        List<BlockPos> list = new ArrayList<>();
+        int minX = chunk.getPos().getMinBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+
+        if (surfaceOnly) {
+            for (int dx = 0; dx < 16; dx++) {
+                for (int dz = 0; dz < 16; dz++) {
+                    BlockPos topPos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(minX + dx, 0, minZ + dz));
+                    BlockPos targetPos = topPos.below();
+                    if (stateFilter.test(world.getBlockState(targetPos))) {
+                        list.add(targetPos);
+                    }
+                }
+            }
+            return list;
+        }
+
+        LevelChunkSection[] sections = chunk.getSections();
+        for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+            LevelChunkSection section = sections[sectionIndex];
+
+            if (section == null || section.hasOnlyAir()) continue;
+
+            int bottomY = chunk.getMinBuildHeight() + (sectionIndex * 16);
+
+            if (world.dimensionType().hasCeiling() && bottomY > 120) break;
+
+            for (int dx = 0; dx < 16; dx++) {
+                for (int dz = 0; dz < 16; dz++) {
+                    for (int dy = 0; dy < 16; dy++) {
+                        BlockState state = section.getBlockState(dx, dy, dz);
+                        if (stateFilter.test(state)) {
+                            list.add(new BlockPos(minX + dx, bottomY + dy, minZ + dz));
+                        }
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    @Unique
+    private void high_voltage$processCauldronFill(ServerLevel world, BlockPos pos, String fluid) {
+        BlockState state = world.getBlockState(pos);
+        String fluidType = fluid.toLowerCase();
+
+        switch (fluidType) {
+            case "water" -> high_voltage$fillLayeredCauldron(world, pos, state, Blocks.WATER_CAULDRON.defaultBlockState());
+            case "snow" -> high_voltage$fillLayeredCauldron(world, pos, state, Blocks.POWDER_SNOW_CAULDRON.defaultBlockState());
+            case "lava" -> {
+                if (state.is(Blocks.CAULDRON)) {
+                    world.setBlockAndUpdate(pos, Blocks.LAVA_CAULDRON.defaultBlockState());
+                }
+            }
+        }
+    }
+
+    @Unique
+    private void high_voltage$fillLayeredCauldron(ServerLevel world, BlockPos pos, BlockState currentState, BlockState filledTargetState) {
+        if (currentState.is(Blocks.CAULDRON)) {
+            world.setBlockAndUpdate(pos, filledTargetState.setValue(LayeredCauldronBlock.LEVEL, 1));
+        } else if (currentState.is(filledTargetState.getBlock())) {
+            int currentLevel = currentState.getValue(LayeredCauldronBlock.LEVEL);
+            if (currentLevel < 3) {
+                world.setBlockAndUpdate(pos, currentState.setValue(LayeredCauldronBlock.LEVEL, currentLevel + 1));
+            }
+        }
+    }
+
+
     @Unique
     private void high_voltage$processStatusEffect(ServerLevel world, LevelChunk chunk, StatusEffectEffect effect) {
-        MobEffect mobEffect = ForgeRegistries.MOB_EFFECTS.getValue(effect.effectId());
+        MobEffect mobEffect = ForgeRegistries.MOB_EFFECTS.getValue(effect.effect());
         if (mobEffect == null) return;
 
         double minX = chunk.getPos().getMinBlockX();
@@ -84,8 +191,8 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, chunkBounds).forEach(entity -> {
-            boolean matchesEntity = effect.entityPredicate().isEmpty() ||
-                    effect.entityPredicate().get().contains(entity.getType().builtInRegistryHolder());
+            boolean matchesEntity = effect.entity_predicate().isEmpty() ||
+                    effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder());
 
             if (matchesEntity) {
                 MobEffectInstance instance = new MobEffectInstance(
@@ -110,8 +217,8 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, chunkBounds).forEach(entity -> {
-            boolean matchesEntity = effect.entities().isEmpty() ||
-                    effect.entities().get().contains(entity.getType().builtInRegistryHolder());
+            boolean matchesEntity = effect.entity_predicate().isEmpty() ||
+                    effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder());
 
             if (matchesEntity) {
                 Vec3 chosenVelocity = effect.getRandomVelocity(world.random);
@@ -132,7 +239,7 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(LivingEntity.class, chunkBounds).forEach(entity -> {
-            if (effect.entityPredicate().contains(entity.getType().builtInRegistryHolder())) {
+            if (effect.entity_predicate().contains(entity.getType().builtInRegistryHolder())) {
                 if (!entity.fireImmune()) {
                     entity.setSecondsOnFire(effect.duration() / 20);
                 }
@@ -149,8 +256,8 @@ public class ChunkTickMixin {
                 minX + 16, world.getMaxBuildHeight(), minZ + 16
         );
 
-        world.getEntitiesOfClass(LivingEntity.class, chunkBounds).forEach(entity -> {
-            if (effect.entityPredicate().contains(entity.getType().builtInRegistryHolder())) {
+        world.getEntitiesOfClass(Entity.class, chunkBounds).forEach(entity -> {
+            if (effect.entity_predicate().contains(entity.getType().builtInRegistryHolder())) {
                 entity.hurt(DamageSource.GENERIC, effect.damage());
             }
         });
@@ -192,19 +299,19 @@ public class ChunkTickMixin {
 
     @Unique
     private void high_voltage$processLayering(ServerLevel world, BlockPos pos, LayerEffect layerEffect) {
-        Block block = ForgeRegistries.BLOCKS.getValue(layerEffect.blockId());
+        Block block = ForgeRegistries.BLOCKS.getValue(layerEffect.block());
         if (block == null) return;
 
         BlockState state = world.getBlockState(pos);
 
-        int localMax = layerEffect.maxLevel();
+        int localMax = layerEffect.max_level();
         if (layerEffect.noisy()) {
             long seed = (long) pos.getX() * 3121L ^ (long) pos.getZ() * 45238971L;
-            localMax = (int) (Math.abs(seed) % (layerEffect.maxLevel())) + 1;
+            localMax = (int) (Math.abs(seed) % (layerEffect.max_level())) + 1;
         }
 
         if (state.is(block)) {
-            IntegerProperty prop = (IntegerProperty) state.getBlock().getStateDefinition().getProperty(layerEffect.propertyName());
+            IntegerProperty prop = (IntegerProperty) state.getBlock().getStateDefinition().getProperty(layerEffect.property());
             if (prop != null) {
                 int currentVal = state.getValue(prop);
                 if (currentVal < localMax) {

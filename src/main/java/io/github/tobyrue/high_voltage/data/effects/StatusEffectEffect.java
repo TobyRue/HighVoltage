@@ -7,32 +7,29 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Optional;
 
 public record StatusEffectEffect(
-        ResourceLocation effectId,
+        ResourceLocation effect,
         int duration,
         int amplifier,
         boolean ambient,
         boolean visible,
-        Optional<HolderSet<EntityType<?>>> entityPredicate,
+        Optional<HolderSet<EntityType<?>>> entity_predicate,
         int chance
 ) implements WeatherProfile.WeatherEffect {
 
     public static final Codec<StatusEffectEffect> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("effect").forGetter(StatusEffectEffect::effectId),
+            ResourceLocation.CODEC.fieldOf("effect").forGetter(StatusEffectEffect::effect),
             Codec.INT.optionalFieldOf("duration", 200).forGetter(StatusEffectEffect::duration),
             Codec.INT.optionalFieldOf("amplifier", 0).forGetter(StatusEffectEffect::amplifier),
-            Codec.BOOL.optionalFieldOf("ambient", false).forGetter(StatusEffectEffect::ambient),
+            Codec.BOOL.optionalFieldOf("ambient", true).forGetter(StatusEffectEffect::ambient),
             Codec.BOOL.optionalFieldOf("visible", false).forGetter(StatusEffectEffect::visible),
             RegistryCodecs.homogeneousList(Registry.ENTITY_TYPE_REGISTRY)
                     .optionalFieldOf("entity_predicate")
-                    .forGetter(StatusEffectEffect::entityPredicate),
+                    .forGetter(StatusEffectEffect::entity_predicate),
             Codec.INT.optionalFieldOf("chance", 1).forGetter(StatusEffectEffect::chance)
     ).apply(instance, StatusEffectEffect::new));
 

@@ -16,6 +16,8 @@
 
   "base_lightning_chance": -1,
   "effects": [
-
+    {
+      "type": "high_voltage:disable_sprinting"
+    }
   ]
 }

@@ -7,27 +7,18 @@ import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
 import io.github.tobyrue.high_voltage.data.effects.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SnowLayerBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
@@ -86,7 +77,7 @@ public class ModEvents {
                     if (effect == null) continue;
 
                     if (world.random.nextInt(effect.chance()) == 0) {
-                        int blockRadius = effect.chunk_radius() * 16;
+                        int blockRadius = effect.radius() * 16;
 
                         int offsetX = world.random.nextInt(blockRadius * 2) - blockRadius;
                         int offsetZ = world.random.nextInt(blockRadius * 2) - blockRadius;
@@ -151,7 +142,7 @@ public class ModEvents {
 
         else if (effect instanceof PlaySoundEffect playEffect) {
             if (world.random.nextInt(playEffect.chance()) == 0) {
-                SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(playEffect.soundId());
+                SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(playEffect.sound());
                 if (soundEvent != null) {
                     world.playSound(null, targetPos, soundEvent, SoundSource.WEATHER, playEffect.volume(), playEffect.pitch());
                 }
@@ -184,7 +175,7 @@ public class ModEvents {
             if (world.random.nextInt(cmd.chance()) == 0) {
                 world.getServer().getCommands().performPrefixedCommand(
                         player.createCommandSourceStack().withPermission(4).withSuppressedOutput(),
-                        cmd.command()
+                        cmd.run()
                 );
             }
         }
@@ -198,9 +189,9 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onSleep(PlayerSleepInBedEvent event) {
-        if (ServerConfig.PREVENT_SLEEP_THUNDER.get() && event.getEntity().level.isThundering()) {
+        if (Config.PREVENT_SLEEP_THUNDER.get() && event.getEntity().level.isThundering()) {
             event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
-            event.getEntity().displayClientMessage(Component.translatable("weather.highvoltage.to_loud_to_sleep"), true);
+            event.getEntity().displayClientMessage(Component.translatable("weather.high_voltage.to_loud_to_sleep"), true);
         }
     }
 

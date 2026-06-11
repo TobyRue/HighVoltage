@@ -1,3 +1,4 @@
 {
-  "weather.highvoltage.to_loud_to_sleep": "The storm is too loud to sleep"
+  "weather.high_voltage.to_loud_to_sleep": "The storm is too loud to sleep",
+  "block.high_voltage.bed.not_possible_now": "You can only sleep at night"
 }

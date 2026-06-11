@@ -107,7 +107,6 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
      * Checks both specific Biome IDs and Biome Tags (HolderSet).
      */
     public static Optional<WeatherProfile> getProfileForBiome(Holder<Biome> biome) {
-        System.out.println("Checking profiles for biome: " + biome.unwrapKey().get().location());
         ResourceLocation targetId = biome.unwrapKey().map(ResourceKey::location).orElse(null);
         for (WeatherProfile profile : PROFILES.values()) {
             boolean matches = profile.biomes().stream().anyMatch(holder ->
@@ -123,7 +122,6 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
                 }
             }
         }
-        System.out.println("No profile found for this biome. Total profiles loaded: " + PROFILES.size());
         return Optional.empty();
     }
     public static WeatherProfile getProfileForBiomeWithFallback(Holder<Biome> biome) {

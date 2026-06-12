@@ -30,22 +30,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 @Debug(export = true)
 public class WeatherRendererMixin {
-//    @Unique
-//    private static final ResourceLocation SAND_STORM = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/sand_storm.png");
-//    @Unique
-//    private static final ResourceLocation HEAVY_SNOW = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/heavy_snow.png");
-//    @Unique
-//    private static final ResourceLocation HEAVY_RAIN = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/heavy_rain.png");
-//    @Unique
-//    private static final ResourceLocation TROPICAL_RAIN = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/tropical_rain.png");
-//
-//
-//    @Shadow
-//    @Final
-//    private static ResourceLocation RAIN_LOCATION;
-//    @Shadow
-//    @Final private static ResourceLocation SNOW_LOCATION;
-
 
     @Shadow private int ticks;
 
@@ -130,16 +114,6 @@ public class WeatherRendererMixin {
         return WeatherProfileLoader.getProfileForBiomeWithFallback(biomeHolder, mc.level);
     }
 
-
-//    @Unique
-//    private WeatherManager.WeatherProfile high_voltage$getProfile() {
-//        Minecraft mc = Minecraft.getInstance();
-//        if (mc.level != null) {
-//            BlockPos pos = mc.gameRenderer.getMainCamera().getBlockPosition();
-//            return WeatherManager.getCurrentProfile(mc.level.getBiome(pos));
-//        }
-//        return null;
-//    }
 
     @Redirect(
             method = "renderSnowAndRain",

@@ -8,10 +8,12 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryCodecs;
 import net.minecraft.world.entity.EntityType;
 
-public record IgniteEffect(HolderSet<EntityType<?>> entity_predicate, int chance, int duration) implements WeatherProfile.WeatherEffect {
+import java.util.Optional;
+
+public record IgniteEffect(Optional<HolderSet<EntityType<?>>> entity_predicate, int chance, int duration) implements WeatherProfile.WeatherEffect {
     public static final Codec<IgniteEffect> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             RegistryCodecs.homogeneousList(Registry.ENTITY_TYPE_REGISTRY)
-                    .fieldOf("entity_predicate")
+                    .optionalFieldOf("entity_predicate")
                     .forGetter(IgniteEffect::entity_predicate),
             Codec.INT.optionalFieldOf("chance", 1).forGetter(IgniteEffect::chance),
             Codec.INT.optionalFieldOf("duration", 100).forGetter(IgniteEffect::duration)

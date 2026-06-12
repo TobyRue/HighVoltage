@@ -23,26 +23,7 @@ public class ClientEvents {
     private static float curEnd = 32.0f;
     private static boolean initialized = false;
 
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.level.isThundering()) {
-            Level world = player.level;
-//
-//            if (world.dimension() == Level.NETHER) {
-//                for(int i = 0; i < 5; i++) {
-//                    world.addParticle(ParticleTypes.FLAME,
-//                            player.getX() + world.random.nextGaussian() * 10,
-//                            player.getY() + world.random.nextGaussian() * 10,
-//                            player.getZ() + world.random.nextGaussian() * 10, 0, 0.1, 0);
-//                }
-//            }
-//
-//            if (world.dimension() == Level.END && player.getY() < 0) {
-//                world.addParticle(ParticleTypes.DRAGON_BREATH, player.getX(), player.getY(), player.getZ(), 0, 0, 0);
-//            }
-        }
-    }
+
     @SubscribeEvent
     public static void onFogColor(ViewportEvent.ComputeFogColor event) {
         Minecraft mc = Minecraft.getInstance();

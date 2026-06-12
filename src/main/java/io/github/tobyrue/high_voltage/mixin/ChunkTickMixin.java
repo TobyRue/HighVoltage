@@ -12,6 +12,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
@@ -56,14 +57,6 @@ public class ChunkTickMixin {
                 if (world.random.nextInt(layerEffect.chance()) == 0) {
                     high_voltage$handleLayeringExecution(world, x, z, layerEffect);
                 }
-            } else if (effect instanceof RingBellEffect bellEffect) {
-                List<BlockPos> validBells = high_voltage$scanChunkForBlocks(world, chunk, false, state ->
-                        state.getBlock() instanceof net.minecraft.world.level.block.BellBlock
-                );
-                if (!validBells.isEmpty() && world.random.nextInt(bellEffect.chance()) == 0) {
-                    BlockPos chosenBell = validBells.get(world.random.nextInt(validBells.size()));
-                    high_voltage$processBellRing(world, chosenBell, bellEffect);
-                }
             } else if (effect instanceof IgniteEffect igniteEffect) {
                 if (world.random.nextInt(igniteEffect.chance()) == 0) {
                     high_voltage$processIgnite(world, chunk, igniteEffect);
@@ -80,32 +73,129 @@ public class ChunkTickMixin {
                 if (world.random.nextInt(statusEffect.chance()) == 0) {
                     high_voltage$processStatusEffect(world, chunk, statusEffect);
                 }
+            } else if (effect instanceof RingBellEffect bellEffect) {
+                List<BlockPos> validBells = high_voltage$locateBellsInChunk(world, chunk);
+
+                if (!validBells.isEmpty()) {
+                    for (BlockPos bellPos : validBells) {
+                        if (world.random.nextInt(bellEffect.chance()) == 0) {
+                            high_voltage$processBellRing(world, bellPos, bellEffect);
+                            break;
+                        }
+                    }
+                }
+
             } else if (effect instanceof FillCauldronEffect fillEffect) {
-                List<BlockPos> validCauldrons = high_voltage$scanChunkForBlocks(world, chunk, fillEffect.surface_only(), state ->
-                        state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON) ||
-                                state.is(Blocks.LAVA_CAULDRON) || state.is(Blocks.POWDER_SNOW_CAULDRON)
-                );
-                if (!validCauldrons.isEmpty() && world.random.nextInt(fillEffect.chance()) == 0) {
-                    BlockPos chosenCauldron = validCauldrons.get(world.random.nextInt(validCauldrons.size()));
-                    high_voltage$processCauldronFill(world, chosenCauldron, fillEffect.fluid());
+                List<BlockPos> validCauldrons;
+
+                if (fillEffect.surface_only()) {
+                    validCauldrons = new ArrayList<>();
+                    int minX = chunk.getPos().getMinBlockX();
+                    int minZ = chunk.getPos().getMinBlockZ();
+
+                    double checksPerTick = 256.0 / Math.max(1, fillEffect.chance());
+                    int wholeChecks = (int) checksPerTick;
+                    double fractionalCheck = checksPerTick - wholeChecks;
+
+                    for (int i = 0; i < wholeChecks; i++) {
+                        high_voltage$sampleSurfaceCauldron(world, chunk, fillEffect);
+                    }
+                    if (world.random.nextDouble() < fractionalCheck) {
+                        high_voltage$sampleSurfaceCauldron(world, chunk, fillEffect);
+                    }
+                } else {
+                    validCauldrons = high_voltage$locateCauldronsInChunk(world, chunk);
+
+                    for (BlockPos cauldronPos : validCauldrons) {
+                        if (world.random.nextInt(fillEffect.chance()) == 0) {
+                            high_voltage$processCauldronFill(world, cauldronPos, fillEffect.fluid());
+                        }
+                    }
                 }
             }
         }
     }
 
 
-//        @Unique
-//        private Optional<BlockPos> high_voltage$(ServerLevel world, LevelChunk chunk, boolean surfaceOnly, java.util.function.Predicate<BlockState> stateFilter) {
-//
-//        }
-    
+    @Unique
+    private void high_voltage$sampleSurfaceCauldron(ServerLevel world, LevelChunk chunk, FillCauldronEffect fillEffect) {
+        int rx = chunk.getPos().getMinBlockX() + world.random.nextInt(16);
+        int rz = chunk.getPos().getMinBlockZ() + world.random.nextInt(16);
+
+        BlockPos topPos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(rx, 0, rz));
+        BlockPos targetPos = topPos.below();
+        BlockState state = world.getBlockState(targetPos);
+
+        if (state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON) || state.is(Blocks.LAVA_CAULDRON) || state.is(Blocks.POWDER_SNOW_CAULDRON)) {
+            high_voltage$processCauldronFill(world, targetPos, fillEffect.fluid());
+        }
+    }
+
+    @Unique
+    private List<BlockPos> high_voltage$locateCauldronsInChunk(ServerLevel world, LevelChunk chunk) {
+        List<BlockPos> positions = new ArrayList<>();
+        LevelChunkSection[] sections = chunk.getSections();
+        int minX = chunk.getPos().getMinBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+
+        for (int s = 0; s < sections.length; s++) {
+            LevelChunkSection section = sections[s];
+            if (section == null || section.hasOnlyAir()) continue;
+
+            boolean hasCauldron = section.getStates().maybeHas(state ->
+                    state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON) ||
+                            state.is(Blocks.LAVA_CAULDRON) || state.is(Blocks.POWDER_SNOW_CAULDRON)
+            );
+            if (!hasCauldron) continue;
+
+            int bottomY = chunk.getMinBuildHeight() + (s * 16);
+            if (world.dimensionType().hasCeiling() && bottomY > 120) break;
+
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int y = 0; y < 16; y++) {
+                        BlockState state = section.getBlockState(x, y, z);
+                        if (state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON) || state.is(Blocks.LAVA_CAULDRON) || state.is(Blocks.POWDER_SNOW_CAULDRON)) {
+                            positions.add(new BlockPos(minX + x, bottomY + y, minZ + z));
+                        }
+                    }
+                }
+            }
+        }
+        return positions;
+    }
+
+    @Unique
+    private List<BlockPos> high_voltage$locateBellsInChunk(ServerLevel world, LevelChunk chunk) {
+        List<BlockPos> positions = new ArrayList<>();
+        LevelChunkSection[] sections = chunk.getSections();
+        int minX = chunk.getPos().getMinBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+
+        for (int s = 0; s < sections.length; s++) {
+            LevelChunkSection section = sections[s];
+            if (section == null || section.hasOnlyAir()) continue;
+
+            boolean hasBell = section.getStates().maybeHas(state -> state.getBlock() instanceof net.minecraft.world.level.block.BellBlock);
+            if (!hasBell) continue;
+
+            int bottomY = chunk.getMinBuildHeight() + (s * 16);
+            if (world.dimensionType().hasCeiling() && bottomY > 120) break;
+
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int y = 0; y < 16; y++) {
+                        if (section.getBlockState(x, y, z).getBlock() instanceof net.minecraft.world.level.block.BellBlock) {
+                            positions.add(new BlockPos(minX + x, bottomY + y, minZ + z));
+                        }
+                    }
+                }
+            }
+        }
+        return positions;
+    }
 
 
-
-
-    /**
-     * Scans a chunk's columns to locate matching block states based on a dynamic filter predicate.
-     */
     @Unique
     private List<BlockPos> high_voltage$scanChunkForBlocks(ServerLevel world, LevelChunk chunk, boolean surfaceOnly, java.util.function.Predicate<BlockState> stateFilter) {
         List<BlockPos> list = new ArrayList<>();
@@ -239,7 +329,13 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(LivingEntity.class, chunkBounds).forEach(entity -> {
-            if (effect.entity_predicate().contains(entity.getType().builtInRegistryHolder())) {
+            if (effect.entity_predicate().isPresent()) {
+                if (effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder())) {
+                    if (!entity.fireImmune()) {
+                        entity.setSecondsOnFire(effect.duration() / 20);
+                    }
+                }
+            } else {
                 if (!entity.fireImmune()) {
                     entity.setSecondsOnFire(effect.duration() / 20);
                 }
@@ -257,7 +353,11 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(Entity.class, chunkBounds).forEach(entity -> {
-            if (effect.entity_predicate().contains(entity.getType().builtInRegistryHolder())) {
+            if (effect.entity_predicate().isPresent()) {
+                if (effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder())) {
+                    entity.hurt(DamageSource.GENERIC, effect.damage());
+                }
+            } else {
                 entity.hurt(DamageSource.GENERIC, effect.damage());
             }
         });
@@ -271,7 +371,7 @@ public class ChunkTickMixin {
             BlockState state = world.getBlockState(pos);
 
             if (state.getBlock() instanceof net.minecraft.world.level.block.BellBlock bell) {
-                bell.attemptToRing(world, pos, net.minecraft.core.Direction.DOWN);
+                bell.attemptToRing(world, pos, state.getValue(BellBlock.FACING));
             }
         }
     }

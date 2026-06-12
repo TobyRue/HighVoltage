@@ -5,11 +5,13 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "high_voltage.refmap.json",
   "mixins": [
+    "AttributeMapAccessor",
     "BedBlockMixin",
     "BiomeColorMixin",
     "ChunkTickMixin",
     "IsRainingMixin",
     "LightningSpawnMixin",
+    "LivingEntityMixin",
     "ServerPlayerMixin",
     "VisibilityMixin",
     "WeatherCommandMixin"

@@ -17,6 +17,17 @@
   "base_lightning_chance": -1,
   "effects": [
     {
+      "type": "high_voltage:damage_armor",
+      "slots": ["chest","head","feet","legs"],
+      "damage": 1,
+      "chance": 200
+    },
+    {
+      "type": "high_voltage:hunger",
+      "exhaustion": 1,
+      "chance": 50
+    },
+    {
       "type": "high_voltage:disable_sprinting"
     }
   ]

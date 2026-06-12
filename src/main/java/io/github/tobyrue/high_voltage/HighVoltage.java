@@ -22,27 +22,18 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.NewRegistryEvent;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(HighVoltage.MODID)
 public class HighVoltage {
     public static final String MODID = "high_voltage";
-    private static final Logger LOGGER = LogUtils.getLogger();
-    public static final ResourceKey<Registry<WeatherProfile>> WEATHER_PROFILE_REGISTRY = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(MODID, "weather_profiles"));
 
     public HighVoltage(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
 
-        // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-//
-//
         MinecraftForge.EVENT_BUS.register(this);
-//
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
 
-//        modEventBus.addListener(this::onConfigLoad);
-//        modEventBus.addListener(this::onConfigReload);
 
         WeatherProfile.WEATHER_PROFILE_REGISTRY.register(modEventBus);
 
@@ -69,21 +60,6 @@ public class HighVoltage {
         WeatherProfile.createRegistry(event);
     }
 
-//    private void onConfigLoad(ModConfigEvent.Loading event) {
-//        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
-//            WeatherManager.parseConfig();
-//            WeatherManager.ServerWeatherManager.parseConfig();
-//            LOGGER.info("High Voltage: Weather profiles loaded.");
-//        }
-//    }
-//
-//    private void onConfigReload(ModConfigEvent.Reloading event) {
-//        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
-//            WeatherManager.parseConfig();
-//            WeatherManager.ServerWeatherManager.parseConfig();
-//            LOGGER.info("High Voltage: Weather profiles reloaded.");
-//        }
-//    }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
     }

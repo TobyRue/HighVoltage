@@ -5,6 +5,7 @@ import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.effects.DisableElytraEffect;
 import io.github.tobyrue.high_voltage.data.effects.DisableSprintingEffect;
 import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.ClientboundUpdateAttributesPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.biome.Biome;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,10 +28,17 @@ public class ServerPlayerMixin {
                 for (WeatherProfile.WeatherEffect effect : profile.effects()) {
                     if (effect instanceof DisableElytraEffect && player.isFallFlying()) {
                         player.stopFallFlying();
-                        break;
                     } else if (effect instanceof DisableSprintingEffect && player.isSprinting()) {
                         player.setSprinting(false);
-                        break;
+
+                        player.onUpdateAbilities();
+
+                        if (player.connection != null) {
+                            player.connection.send(new ClientboundUpdateAttributesPacket(
+                                    player.getId(),
+                                    player.getAttributes().getSyncableAttributes()
+                            ));
+                        }
                     }
                 }
             }

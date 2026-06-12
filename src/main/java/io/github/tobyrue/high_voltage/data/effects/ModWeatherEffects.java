@@ -53,6 +53,9 @@ public class ModWeatherEffects {
     public static final RegistryObject<WeatherProfile.WeatherEffectType<FillCauldronEffect>> FILL_CAULDRON =
             EFFECTS.register("fill_cauldron", () -> new WeatherProfile.WeatherEffectType<>(FillCauldronEffect.CODEC));
 
+    public static final RegistryObject<WeatherProfile.WeatherEffectType<ModifyAttributeEffect>> MODIFY_ATTRIBUTE =
+            EFFECTS.register("modify_attribute", () -> new WeatherProfile.WeatherEffectType<>(ModifyAttributeEffect.CODEC));
+
     public static final RegistryObject<WeatherProfile.WeatherEffectType<StatusEffectEffect>> STATUS_EFFECT =
             EFFECTS.register("status_effect", () -> new WeatherProfile.WeatherEffectType<>(StatusEffectEffect.CODEC));
 }

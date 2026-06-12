@@ -27,7 +27,7 @@
     },
     {
       "type": "high_voltage:freeze",
-      "freeze_ticks": 60
+      "freeze_ticks": 100
     },
     {
       "type": "high_voltage:disable_sprinting"
@@ -35,7 +35,7 @@
     {
       "type": "high_voltage:fill_cauldron",
       "fluid": "snow",
-      "chance": 1
+      "chance": 200
     }
   ]
 }

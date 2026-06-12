@@ -5,10 +5,12 @@ import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
 import io.github.tobyrue.high_voltage.data.effects.*;
+import io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.commands.AttributeCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -16,6 +18,12 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -27,6 +35,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.registries.ForgeRegistries;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = HighVoltage.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ModEvents {
@@ -105,10 +118,22 @@ public class ModEvents {
         ServerPlayer player = (ServerPlayer) event.player;
         ServerLevel world = player.getLevel();
         BlockPos playerPos = player.blockPosition();
-        // && WeatherSafetyHelper.isOutside(world, playerPos)
+
+
         if (world.isThundering()) {
             var biome = world.getBiome(playerPos);
             var profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, world);
+
+
+            java.util.Set<UUID> currentProfileModifierIds = new java.util.HashSet<>();
+            for (WeatherProfile.WeatherEffect action : profile.effects()) {
+                if (action instanceof ModifyAttributeEffect effect) {
+                    currentProfileModifierIds.add(effect.getModifierId());
+                }
+            }
+
+
+            high_voltage$clearForeignStormAttributes(player, currentProfileModifierIds);
 
             int r = 16;
             BlockPos targetPos = null;
@@ -126,8 +151,89 @@ public class ModEvents {
             }
             if (targetPos == null) targetPos = playerPos;
 
+            boolean isInCorrectBiome = world.getBiome(playerPos).equals(biome);
+
             for (WeatherProfile.WeatherEffect action : profile.effects()) {
-                runWeatherEffect(world, player, targetPos, action);
+                if (action instanceof ModifyAttributeEffect effect) {
+                    Attribute attribute = effect.getAttribute();
+                    if (attribute == null) continue;
+
+                    AttributeInstance instance = player.getAttributes().getInstance(attribute);
+                    if (instance == null) continue;
+
+                    UUID modifierId = effect.getModifierId();
+                    AttributeModifier modifier = effect.createModifier();
+
+                    if (isInCorrectBiome) {
+                        if (instance.getModifier(modifierId) == null) {
+                            int roll = world.random.nextInt(effect.chance());
+
+                            if (roll == 0) {
+                                instance.addPermanentModifier(modifier);
+
+                                if (effect.attribute().equals("minecraft:generic.max_health")) {
+                                    player.setHealth(player.getHealth());
+                                } else if (effect.attribute().equals("minecraft:generic.movement_speed")) {
+                                    player.onUpdateAbilities();
+                                }
+                            }
+                        }
+                    }
+                }
+//                else if (action instanceof DisableSprintingEffect effect) {
+//                    AttributeInstance instance = player.getAttributes().getInstance(Attributes.MOVEMENT_SPEED);
+//                    instance.removeModifier(UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D"));
+//                    instance.removeModifier(new AttributeModifier(UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D"), "Sprinting speed boost", (double)0.3F, AttributeModifier.Operation.MULTIPLY_TOTAL));
+//                }
+                else {
+                    runWeatherEffect(world, player, targetPos, action);
+                }
+            }
+        } else {
+            high_voltage$clearAllStormAttributes(player);
+        }
+    }
+
+    private static void high_voltage$clearForeignStormAttributes(ServerPlayer player, java.util.Set<UUID> allowedIds) {
+        var accessor = (io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor) player.getAttributes();
+        java.util.Collection<AttributeInstance> instances = accessor.high_voltage$getAttributesMap().values();
+
+        for (AttributeInstance attributeInstance : instances) {
+            java.util.Set<AttributeModifier> modifiers = new java.util.HashSet<>(attributeInstance.getModifiers());
+
+            for (AttributeModifier modifier : modifiers) {
+                if (modifier.getName().startsWith("[High Voltage Weather] ")) {
+                    if (!allowedIds.contains(modifier.getId())) {
+                        attributeInstance.removeModifier(modifier);
+
+                        if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
+                            player.setHealth(player.getHealth());
+                        } else if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
+                            player.onUpdateAbilities();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void high_voltage$clearAllStormAttributes(ServerPlayer player) {
+        var accessor = (io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor) player.getAttributes();
+        java.util.Collection<AttributeInstance> instances = accessor.high_voltage$getAttributesMap().values();
+
+        for (AttributeInstance attributeInstance : instances) {
+            java.util.Set<AttributeModifier> modifiers = new java.util.HashSet<>(attributeInstance.getModifiers());
+
+            for (AttributeModifier modifier : modifiers) {
+                if (modifier.getName().startsWith("[High Voltage Weather] ")) {
+                    attributeInstance.removeModifier(modifier);
+
+                    if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
+                        player.setHealth(player.getHealth());
+                    } else if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
+                        player.onUpdateAbilities();
+                    }
+                }
             }
         }
     }

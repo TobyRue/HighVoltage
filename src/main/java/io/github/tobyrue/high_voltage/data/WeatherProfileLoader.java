@@ -164,10 +164,8 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
     public static Optional<WeatherProfile.WeatherEffectType<?>> getEffectTypeById(ResourceLocation id) {
         return Optional.ofNullable(WeatherProfile.WeatherEffectType.REGISTRY.get().getValue(id));
     }
-    /**
-     * Searches a profile for an effect matching a specific RegistryObject type.
-     * Usage: getEffect(profile, ModWeatherEffects.COMMAND)
-     */
+
+
     public static <T extends WeatherProfile.WeatherEffect> T getEffect(WeatherProfile profile, RegistryObject<WeatherProfile.WeatherEffectType<T>> type) {
         for (WeatherProfile.WeatherEffect effect : profile.effects()) {
             if (effect.getType() == type.get()) {

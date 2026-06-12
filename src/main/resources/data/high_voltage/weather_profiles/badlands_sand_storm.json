@@ -14,7 +14,7 @@
     "end": 30
   },
 
-  "base_lightning_chance": 100000,
+  "base_lightning_chance": 10000,
   "effects": [
     {
       "type": "high_voltage:damage_armor",
@@ -29,6 +29,11 @@
     },
     {
       "type": "high_voltage:disable_sprinting"
+    },
+    {
+      "type": "high_voltage:summon_entity",
+      "entity": "minecraft:husk",
+      "chance": 200
     }
   ]
 }

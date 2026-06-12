@@ -42,7 +42,7 @@
     {
       "type": "high_voltage:fill_cauldron",
       "fluid": "water",
-      "chance": 1
+      "chance": 200
     }
   ]
 }

@@ -34,7 +34,6 @@ public record ModifyAttributeEffect(
     }
 
     public AttributeModifier createModifier() {
-        System.out.println(name);
         return new AttributeModifier(getModifierId(), name, value, operation);
     }
 

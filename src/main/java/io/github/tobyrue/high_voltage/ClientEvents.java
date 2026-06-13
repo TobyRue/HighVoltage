@@ -3,12 +3,18 @@ package io.github.tobyrue.high_voltage;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,6 +30,66 @@ public class ClientEvents {
     private static boolean initialized = false;
 
 
+//    private static boolean wasThundering = false;
+//
+//    @SubscribeEvent
+//    public static void onClientTick(TickEvent.ClientTickEvent event) {
+//        if (event.phase == TickEvent.Phase.END) {
+//            Minecraft mc = Minecraft.getInstance();
+//            ClientLevel world = mc.level;
+//
+//            if (world != null) {
+//                boolean isThundering = world.isThundering();
+//
+//                if (isThundering != wasThundering) {
+//                    wasThundering = isThundering;
+//
+//                    mc.levelRenderer.allChanged();
+//                }
+//            }
+//        }
+//    }
+    private static boolean wasThundering = false;
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            Minecraft mc = Minecraft.getInstance();
+            ClientLevel world = mc.level;
+
+            if (world != null) {
+                boolean isThundering = world.isThundering();
+
+                if (isThundering != wasThundering) {
+                    wasThundering = isThundering;
+
+                    high_voltage$refreshVisibleChunksSmoothly(mc);
+                }
+            }
+        }
+    }
+
+    private static void high_voltage$refreshVisibleChunksSmoothly(Minecraft mc) {
+        if (mc.level == null || mc.player == null) return;
+
+        int viewDistance = mc.options.getEffectiveRenderDistance();
+        int playerChunkX = SectionPos.blockToSectionCoord(mc.player.getX());
+        int playerChunkZ = SectionPos.blockToSectionCoord(mc.player.getZ());
+
+        int minBlockX = (playerChunkX - viewDistance) << 4;
+        int maxBlockX = (playerChunkX + viewDistance) << 4;
+        int minBlockZ = (playerChunkZ - viewDistance) << 4;
+        int maxBlockZ = (playerChunkZ + viewDistance) << 4;
+
+        mc.levelRenderer.setBlocksDirty(
+                minBlockX,
+                mc.level.getMinBuildHeight(),
+                minBlockZ,
+                maxBlockX,
+                mc.level.getMaxBuildHeight(),
+                maxBlockZ
+        );
+    }
     @SubscribeEvent
     public static void onFogColor(ViewportEvent.ComputeFogColor event) {
         Minecraft mc = Minecraft.getInstance();
@@ -35,9 +101,8 @@ public class ClientEvents {
         float targetR = event.getRed();
         float targetG = event.getGreen();
         float targetB = event.getBlue();
-
-        if (profile.fog() != null) {
-            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+        if (profile.fog() != null && mc.player != null) {
+            if (mc.level.isThundering() && OutsideDetector.isOutside(mc.level, mc.player)) {
                 targetR = (float) (profile.fog().color() >> 16 & 255) / 255.0F;
                 targetG = (float) (profile.fog().color() >> 8 & 255) / 255.0F;
                 targetB = (float) (profile.fog().color() & 255) / 255.0F;
@@ -58,7 +123,7 @@ public class ClientEvents {
             event.setGreen(curG);
             event.setBlue(curB);
         } else {
-            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
                 targetR = (float) (biome.get().getFogColor() >> 16 & 255) / 255.0F;
                 targetG = (float) (biome.get().getFogColor() >> 8 & 255) / 255.0F;
                 targetB = (float) (biome.get().getFogColor() & 255) / 255.0F;
@@ -93,8 +158,7 @@ public class ClientEvents {
         float targetEnd = event.getFarPlaneDistance();
 
         if (profile.fog() != null) {
-
-            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
                 targetStart = profile.fog().start();
                 targetEnd = profile.fog().end();
             }
@@ -109,7 +173,7 @@ public class ClientEvents {
                 event.setCanceled(true);
             }
         } else {
-            if (mc.level.isThundering() && WeatherSafetyHelper.isOutside(mc.level, event.getCamera().getBlockPosition())) {
+            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
                 targetStart = 8;
                 targetEnd = 64;
             }

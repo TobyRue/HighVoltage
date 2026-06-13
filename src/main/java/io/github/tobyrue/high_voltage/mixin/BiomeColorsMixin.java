@@ -3,9 +3,12 @@ package io.github.tobyrue.high_voltage.mixin;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.Holder;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biome;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -13,25 +16,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(Biome.class)
-public class BiomeColorMixin {
-//    @Inject(method = "getFoliageColor", at = @At("RETURN"), cancellable = true)
-//    private void high_voltage$tintFoliageColor(CallbackInfoReturnable<Integer> cir) {
-//        high_voltage$applyOverlay(cir);
-//    }
-//
-//    @Inject(method = "getGrassColor", at = @At("RETURN"), cancellable = true)
-//    private void high_voltage$tintGrassColor(double posX, double posZ, CallbackInfoReturnable<Integer> cir) {
-//        high_voltage$applyOverlay(cir);
+@Mixin(BiomeColors.class)
+public class BiomeColorsMixin {
+
+//    @Inject(method = "getAverageColor", at = @At("RETURN"), cancellable = true)
+//    private static void high_voltage$overrideHardcodedColors(BlockAndTintGetter level, BlockPos pos, ColorResolver resolver, CallbackInfoReturnable<Integer> cir) {
+//        high_voltage$applyOverlay(pos, cir);
 //    }
 //
 //    @Unique
-//    private void high_voltage$applyOverlay(CallbackInfoReturnable<Integer> cir) {
+//    private static void high_voltage$applyOverlay(BlockPos pos, CallbackInfoReturnable<Integer> cir) {
 //        Minecraft mc = Minecraft.getInstance();
 //        ClientLevel world = mc.level;
 //
 //        if (world != null) {
-//            Holder<Biome> biome = Holder.direct((Biome) (Object) this);
+//            Holder<Biome> biome = world.getBiome(pos);
 //            WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, world);
 //
 //            if (profile != null && world.isThundering()) {

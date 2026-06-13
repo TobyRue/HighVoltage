@@ -5,12 +5,10 @@ import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
 import io.github.tobyrue.high_voltage.data.effects.*;
-import io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.commands.AttributeCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -18,14 +16,12 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -36,9 +32,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = HighVoltage.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -152,7 +145,6 @@ public class ModEvents {
             if (targetPos == null) targetPos = playerPos;
 
             boolean isInCorrectBiome = world.getBiome(playerPos).equals(biome);
-
             for (WeatherProfile.WeatherEffect action : profile.effects()) {
                 if (action instanceof ModifyAttributeEffect effect) {
                     Attribute attribute = effect.getAttribute();
@@ -180,11 +172,6 @@ public class ModEvents {
                         }
                     }
                 }
-//                else if (action instanceof DisableSprintingEffect effect) {
-//                    AttributeInstance instance = player.getAttributes().getInstance(Attributes.MOVEMENT_SPEED);
-//                    instance.removeModifier(UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D"));
-//                    instance.removeModifier(new AttributeModifier(UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D"), "Sprinting speed boost", (double)0.3F, AttributeModifier.Operation.MULTIPLY_TOTAL));
-//                }
                 else {
                     runWeatherEffect(world, player, targetPos, action);
                 }
@@ -239,7 +226,7 @@ public class ModEvents {
     }
 
     private static void runWeatherEffect(ServerLevel world, ServerPlayer player, BlockPos targetPos, WeatherProfile.WeatherEffect effect) {
-
+        boolean isOutside = OutsideDetector.isOutside(world, player);
         if (effect instanceof HungerEffect hunger) {
             if (world.random.nextInt(hunger.chance()) == 0) {
                 player.getFoodData().addExhaustion(hunger.exhaustion());
@@ -287,8 +274,16 @@ public class ModEvents {
         }
 
         else if (effect instanceof FreezeEffect freeze) {
-            if (player.getTicksFrozen() < freeze.freeze_ticks()) {
-                player.setTicksFrozen(player.getTicksFrozen() + 5);
+            if (isOutside) {
+                if (player.getTicksFrozen() < freeze.freeze_ticks()) {
+                    if (!(player.getLevel().getBrightness(LightLayer.BLOCK, player.getOnPos().above()) > 11)) {
+                        player.setTicksFrozen(player.getTicksFrozen() + 5);
+                    }
+                } else if (freeze.freeze_ticks() == player.getTicksFrozen()) {
+                    if (!(player.getLevel().getBrightness(LightLayer.BLOCK, player.getOnPos().above()) > 11)) {
+                        player.setTicksFrozen(freeze.freeze_ticks());
+                    }
+                }
             }
         }
     }

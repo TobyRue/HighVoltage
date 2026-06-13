@@ -28,8 +28,9 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
-@Debug(export = true)
 public class WeatherRendererMixin {
+    @Shadow
+    private ClientLevel level;
 
     @Shadow private int ticks;
 
@@ -71,6 +72,9 @@ public class WeatherRendererMixin {
                 }
                 high_voltage$currentBatchTexture = neededTexture;
             }
+        }
+        if (level != null && level.isThundering()) {
+            return true;
         }
         return instance.warmEnoughToRain(pos);
     }
@@ -198,6 +202,7 @@ public class WeatherRendererMixin {
         }
         return instance.getPrecipitation();
     }
+
 
     @Redirect(
             method = "tickRain",

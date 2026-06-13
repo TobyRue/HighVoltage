@@ -47,7 +47,8 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
             new WeatherProfile.Fog(0x8E8945, 5, 30),
             List.of(),
 
-            10000
+            10000,
+            0x00FFFFFF
     );
     public static final WeatherProfile DEFAULT_SNOW = new WeatherProfile(
             HolderSet.direct(),
@@ -61,7 +62,8 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
             ),
             new WeatherProfile.Fog(0xFFFFFF, 5, 40),
             List.of(new FreezeEffect(100)),
-            10000
+            10000,
+            0xFFFFFFFF
     );
     public static final WeatherProfile DEFAULT_NONE = new WeatherProfile(
             HolderSet.direct(),
@@ -74,7 +76,8 @@ public class WeatherProfileLoader extends SimpleJsonResourceReloadListener {
             ),
             null,
             List.of(),
-            10000
+            10000,
+            0x00FFFFFF
     );
 
     public WeatherProfileLoader() {

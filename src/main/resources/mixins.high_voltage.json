@@ -17,6 +17,8 @@
     "WeatherCommandMixin"
   ],
   "client": [
+    "BiomeColorsMixin",
+    "BlockColorsMixin",
     "WeatherRendererMixin"
   ],
   "injectors": {

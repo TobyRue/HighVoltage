@@ -23,7 +23,8 @@ public record WeatherProfile(
         @Nullable Precipitation precipitation,
         @Nullable Fog fog,
         List<WeatherEffect> effects,
-        int baseLightningChance
+        int baseLightningChance,
+        int foliageColor
 ) {
 
 
@@ -44,18 +45,41 @@ public record WeatherProfile(
             Precipitation.CODEC.optionalFieldOf("precipitation").forGetter(wp -> Optional.ofNullable(wp.precipitation())),
             Fog.CODEC.optionalFieldOf("fog").forGetter(wp -> Optional.ofNullable(wp.fog())),
             WeatherEffect.CODEC.listOf().optionalFieldOf("effects").forGetter(wp -> Optional.ofNullable(wp.effects)),
-            Codec.INT.optionalFieldOf("base_lightning_chance").forGetter(wp -> Optional.of(wp.baseLightningChance))
+            Codec.INT.optionalFieldOf("base_lightning_chance").forGetter(wp -> Optional.of(wp.baseLightningChance)),
+            Codec.STRING.optionalFieldOf("foliage_color", "#00FFFFFF")
+                    .xmap(WeatherProfile::hexStringToIntWithAlpha, WeatherProfile::intToHexStringWithAlpha)
+                    .forGetter(WeatherProfile::foliageColor)
     ).apply(instance,
-            (biomes, precip, fog, effects, chance) ->
-            new WeatherProfile(biomes, precip.orElse(null), fog.orElse(null), effects.orElse(List.of()), chance.orElse(10000))));
+            (biomes, precip, fog, effects, chance, fc) ->
+            new WeatherProfile(biomes, precip.orElse(null), fog.orElse(null), effects.orElse(List.of()), chance.orElse(10000), fc)));
 
+    public static Integer hexStringToIntWithAlpha(final String hex) {
+        try {
+            long parsed = Long.parseLong(hex.substring(1), 16);
+
+            if (hex.length() - 1 == 6) {
+                parsed |= 0xFF000000L;
+            }
+            return (int) parsed;
+        } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
+            return 0xFFFFFFFF;
+        }
+    }
+
+    public static String intToHexStringWithAlpha(final Integer hex) {
+        try {
+            return "#" + String.format("%08X", hex);
+        } catch (Exception ignored) {
+            return "#FFFFFF";
+        }
+    }
 
     public static Integer hexStringToInt(final String hex) {
 
         try {
             return Integer.parseInt(hex.substring(1), 16);
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
-            return 0;
+            return 0xFFFFFF;
         }
     }
     public static String intToHexString(final Integer hex) {

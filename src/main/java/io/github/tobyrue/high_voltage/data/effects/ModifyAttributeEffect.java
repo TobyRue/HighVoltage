@@ -48,7 +48,7 @@ public record ModifyAttributeEffect(
                     AttributeModifier.Operation::valueOf,
                     AttributeModifier.Operation::name
             ).forGetter(ModifyAttributeEffect::operation),
-            Codec.INT.fieldOf("chance").forGetter(ModifyAttributeEffect::chance)
+            Codec.INT.optionalFieldOf("chance", 1).forGetter(ModifyAttributeEffect::chance)
     ).apply(instance, ModifyAttributeEffect::new));
 
     @Override

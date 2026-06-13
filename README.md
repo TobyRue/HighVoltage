@@ -607,14 +607,14 @@ Useful for snow accumulation, ash buildup, dust storms, and similar effects.
 "high_voltage:layer"
 ```
 
-| Field          | Type              | Required / Default | Description                               |
-| -------------- | ----------------- | ------------------ | ----------------------------------------- |
-| `block`        | Resource Location | Yes                | Block to place or modify.                 |
-| `property`     | String            | Yes                | Integer property used as the layer count. |
-| `max_level`    | Integer           | Yes                | Maximum layer level.                      |
-| `noisy`        | Boolean           | Yes                | Enables random placement patterns.        |
-| `surface_only` | Boolean           | Optional (`true`)  | Only affect exposed surfaces.             |
-| `chance`       | Integer           | Yes                | Placement chance.                         |
+| Field          | Type              | Required / Default | Description                                                                                |
+| -------------- | ----------------- | ------------------ |--------------------------------------------------------------------------------------------|
+| `block`        | Resource Location | Yes                | Block to place or modify.                                                                  |
+| `property`     | String            | Yes                | Integer property used as the layer count.                                                  |
+| `max_level`    | Integer           | Yes                | Maximum layer level.                                                                       |
+| `noisy`        | Boolean           | Yes                | Randomly chooses an inclusive value out of the `max_value` and limits the height of which. |
+| `surface_only` | Boolean           | Optional (`true`)  | Only affect exposed surfaces.                                                              |
+| `chance`       | Integer           | Yes                | Placement chance.                                                                          |
 
 Example:
 
@@ -642,20 +642,20 @@ Temporarily modifies entity attributes during weather.
 "high_voltage:modify_attribute"
 ```
 
-| Field       | Type              | Required | Description          |
-| ----------- | ----------------- | -------- | -------------------- |
-| `attribute` | Resource Location | Yes      | Attribute to modify. |
-| `name`      | String            | Yes      | Modifier name.       |
-| `value`     | Double            | Yes      | Modifier value.      |
-| `operation` | String            | Yes      | Attribute operation. |
-| `chance`    | Integer           | Yes      | Application chance.  |
+| Field       | Type              | Required / Default | Description          |
+|-------------|-------------------|--------------------|----------------------|
+| `attribute` | Resource Location | Yes                | Attribute to modify. |
+| `name`      | String            | Yes                | Modifier name.       |
+| `value`     | Double            | Yes                | Modifier value.      |
+| `operation` | String            | Yes                | Attribute operation. |
+| `chance`    | Integer           | Optional (`1`)     | Application chance.  |
 
 Valid operations:
 
 ```text
-add_value
-add_multiplied_base
-add_multiplied_total
+addition
+multiply_base
+multiply_total
 ```
 
 Example:
@@ -666,7 +666,7 @@ Example:
   "attribute": "minecraft:generic_movement_speed",
   "name": "Blizzard Slowdown",
   "value": -0.2,
-  "operation": "add_multiplied_total",
+  "operation": "addition",
   "chance": 1
 }
 ```
@@ -714,10 +714,10 @@ Rings nearby bells during storms.
 "high_voltage:ring_bell"
 ```
 
-| Field    | Type    | Required |
-| -------- | ------- | -------- |
-| `radius` | Float   | Yes      |
-| `chance` | Integer | Yes      |
+| Field    | Type    | Required | Description      |
+| -------- | ------- | -------- |------------------|
+| `radius` | Float   | Yes      | Radius in blocks |
+| `chance` | Integer | Yes      | Chance to occur  |
 
 Example:
 

@@ -307,10 +307,15 @@ public class ChunkTickMixin {
         );
 
         world.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, chunkBounds).forEach(entity -> {
-            boolean matchesEntity = effect.entity_predicate().isEmpty() ||
-                    effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder());
+            if (effect.entity_predicate().isPresent()) {
+                if (effect.entity_predicate().get().contains(entity.getType().builtInRegistryHolder())) {
+                    Vec3 chosenVelocity = effect.getRandomVelocity(world.random);
 
-            if (matchesEntity) {
+                    entity.setDeltaMovement(entity.getDeltaMovement().add(chosenVelocity));
+
+                    entity.hurtMarked = true;
+                }
+            } else {
                 Vec3 chosenVelocity = effect.getRandomVelocity(world.random);
 
                 entity.setDeltaMovement(entity.getDeltaMovement().add(chosenVelocity));

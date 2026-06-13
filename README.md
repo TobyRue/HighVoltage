@@ -31,6 +31,7 @@ Every Weather Profile file uses a root object containing the following configura
   "fog": { },
   "effects": [ ]
 }
+```
 
 # 2. Effects
 

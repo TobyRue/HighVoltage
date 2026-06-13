@@ -19,7 +19,7 @@ Every Weather Profile file uses a root object containing the following configura
 Every Weather Profile file uses a root object containing the following fields:
 
 | Field                   | Type                    | Required / Default     | Description                                                                                       |
-| :---------------------- | :---------------------- |:-----------------------| :------------------------------------------------------------------------------------------------ |
+|:------------------------|:------------------------|:-----------------------|:--------------------------------------------------------------------------------------------------|
 | `biomes`                | Biome Tag or Biome List | **Required**           | Determines which biomes use this weather profile. Supports biome tags and explicit biome entries. |
 | `precipitation`         | Object                  | Optional (`none`)      | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
 | `fog`                   | Object                  | Optional (`none`)      | Controls custom fog coloring and density distances.                                               |
@@ -105,13 +105,13 @@ The `precipitation` object controls the visual appearance and behavior of fallin
 ## Structure
 
 | Field            | Type               | Required / Default                                      | Description                                                                            |
-| :--------------- | :----------------- |:--------------------------------------------------------| :------------------------------------------------------------------------------------- |
+|:-----------------|:-------------------|:--------------------------------------------------------|:---------------------------------------------------------------------------------------|
 | `texture`        | Resource Location  | Optional (`high_voltage:textures/environment/none.png`) | Texture rendered as falling precipitation.                                             |
 | `tint`           | String (Hex Color) | Optional (`#FFFFFF`)                                    | Color multiplier applied to the precipitation texture.                                 |
 | `vx`             | Float              | **Required**                                            | Horizontal movement velocity.                                                          |
-| `vy`             | Float              | **Required**                                            | Vertical movement velocity. Negative values fall downward.                             |
+| `vy`             | Float              | **Required**                                            | Vertical movement velocity.                                                            |
 | `acts_like_rain` | Boolean            | Optional (`true`)                                       | Determines whether the precipitation behaves as rain for vanilla weather interactions. |
-| `land_particle`  | Particle Type      | Optional (`none`)                                         | Particle spawned when precipitation lands on surfaces.                                 |
+| `land_particle`  | Particle Type      | Optional (`none`)                                       | Particle spawned when precipitation lands on surfaces.                                 |
 | `land_sound`     | Boolean            | Optional (`false`)                                      | Enables vanilla-style precipitation landing sounds.                                    |
 
 ## Color Format
@@ -166,11 +166,11 @@ The `fog` object controls client-side atmospheric fog rendering while the weathe
 
 ## Structure
 
-| Field   | Type               | Required     | Description                                              |
-| :------ | :----------------- | :----------- | :------------------------------------------------------- |
-| `color` | String (Hex Color) | **Required** | Target fog color.                                        |
-| `start` | Integer            | **Required** | Distance from the camera where fog begins.               |
-| `end`   | Integer            | **Required** | Distance from the camera where fog reaches full density. |
+| Field   | Type               | Required     | Description                                             |
+|:--------|:-------------------|:-------------|:--------------------------------------------------------|
+| `color` | String (Hex Color) | **Required** | Target fog color.                                       |
+| `start` | Integer            | **Required** | Distance from the camera where fog begins.              |
+| `end`   | Integer            | **Required** | Distance from the camera where fog reaches full density.|
 
 ---
 

@@ -23,10 +23,10 @@ Weather Profiles are data-driven JSON sets that control atmospheric properties, 
 Every Weather Profile file uses a root object containing the following fields:
 
 | Field                   | Type                    | Required / Default     | Description                                                                                       |
-| :---------------------- | :---------------------- | :--------------------- | :------------------------------------------------------------------------------------------------ |
+| :---------------------- | :---------------------- |:-----------------------| :------------------------------------------------------------------------------------------------ |
 | `biomes`                | Biome Tag or Biome List | **Required**           | Determines which biomes use this weather profile. Supports biome tags and explicit biome entries. |
-| `precipitation`         | Object                  | Optional               | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
-| `fog`                   | Object                  | Optional               | Controls custom fog coloring and density distances.                                               |
+| `precipitation`         | Object                  | Optional (`none`)      | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
+| `fog`                   | Object                  | Optional (`none`)      | Controls custom fog coloring and density distances.                                               |
 | `effects`               | Array                   | Optional (`[]`)        | Collection of weather effects executed while the profile is active.                               |
 | `base_lightning_chance` | Integer                 | Optional (`10000`)     | Base lightning frequency. Lower numbers produce more lightning strikes.                           |
 | `foliage_color`         | Hex Color (`#AARRGGBB`) | Optional (`#00FFFFFF`) | Color overlay applied to foliage. Supports alpha transparency.                                    |

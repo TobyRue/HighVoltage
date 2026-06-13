@@ -146,7 +146,20 @@ public record WeatherProfile(
                         try {
                             com.google.gson.JsonElement jsonElement = ops.convertTo(JsonOps.INSTANCE, input);
                             if (jsonElement instanceof com.google.gson.JsonObject obj) {
-                                high_voltage$diagnoseEffectError(obj, rawError);
+                                String fileNameContext = "Unknown Data File / Memory Stream";
+
+                                try {
+                                    java.lang.reflect.Field contextField = ops.getClass().getDeclaredField("registryLifecycle");
+                                    contextField.setAccessible(true);
+                                    Object lifecycle = contextField.get(ops);
+                                    if (lifecycle != null) {
+                                        fileNameContext = lifecycle.toString();
+                                    }
+                                } catch (Exception ignored) {
+                                    fileNameContext = ops.toString();
+                                }
+
+                                high_voltage$diagnoseEffectError(obj, rawError, fileNameContext);
                             }
                         } catch (Exception e) {
                             System.err.println("[High Voltage Diagnostics Failed]: " + e.getMessage());
@@ -161,9 +174,9 @@ public record WeatherProfile(
                 return getInternal().encode(input, ops, prefix);
             }
 
-            private void high_voltage$diagnoseEffectError(com.google.gson.JsonObject json, String dfuMessage) {
-                System.err.println("\n=================================================================");
+            private void high_voltage$diagnoseEffectError(com.google.gson.JsonObject json, String dfuMessage, String fileOrigin) {                System.err.println("\n=================================================================");
                 System.err.println(" [High Voltage]: WEATHER EFFECT PARSING FAILURE");
+                System.err.println(" SOURCE FILE: " + fileOrigin);
                 System.err.println("=================================================================");
                 System.err.println("DFU Core Error: " + dfuMessage);
 

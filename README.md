@@ -206,7 +206,7 @@ Higher values create lighter atmospheric effects.
 
 ---
 
-## Examples: Dense Blizzard Fog
+## Examples:
 
 ```json
 {

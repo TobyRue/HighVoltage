@@ -1,4 +1,4 @@
-# High Voltage — Weather Profile Configuration Guide
+# High Voltage - Weather Profile Configuration Guide
 
 Weather Profiles are data-driven JSON sets that control atmospheric properties, customs rendering behaviors, overlays, and custom logic behaviors across groups of biomes.
 
@@ -13,10 +13,6 @@ data/<namespace>/weather_profiles/<file_name>.json
 ## 1. Top-Level Profile Structure
 
 Every Weather Profile file uses a root object containing the following configuration fields:
-
-# High Voltage — Weather Profile Configuration Guide
-
-Weather Profiles are data-driven JSON sets that control atmospheric properties, custom rendering behaviors, overlays, lightning frequency, and weather effects across groups of biomes.
 
 ---
 

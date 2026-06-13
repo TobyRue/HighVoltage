@@ -4,7 +4,9 @@ Weather Profiles are data-driven JSON sets that control atmospheric properties, 
 
 ## File Location
 Profiles must be placed inside a datapack using the following structure:
-`data/<namespace>/weather_profiles/<file_name>.json`
+```text
+data/<namespace>/weather_profiles/<file_name>.json
+```
 
 ---
 
@@ -12,28 +14,265 @@ Profiles must be placed inside a datapack using the following structure:
 
 Every Weather Profile file uses a root object containing the following configuration fields:
 
-| Field | Type | Required / Default | Description |
-| :--- | :--- | :--- | :--- |
-| `biomes` | String / Array | **Required** | A biome tag (e.g., `#minecraft:is_ocean`) or a list of explicit biome registry IDs (e.g., `["minecraft:plains"]`). |
-| `precipitation` | Object | Optional | Defines visual particles, sounds, falling textures, and velocities. |
-| `fog` | Object | Optional | Dictates the rendering fog density distance ranges and HEX target coloring. |
-| `effects` | Array of Objects | Optional (`[]`) | Collection of custom code execution logic components to run dynamically. |
-| `base_lightning_chance` | Integer | Optional (`10000`) | The lower the number, the higher the frequency of lightning bolts during active storms. |
-| `foliage_color` | String (Hex) | Optional (`#00FFFFFF`) | Overlays color onto leaves and biome maps. Supports Alpha channels (`#AARRGGBB`). If alpha is omitted, it defaults to full opacity (`#FF...`). |
+# High Voltage — Weather Profile Configuration Guide
 
-### JSON Example
+Weather Profiles are data-driven JSON sets that control atmospheric properties, custom rendering behaviors, overlays, lightning frequency, and weather effects across groups of biomes.
+
+---
+
+Every Weather Profile file uses a root object containing the following fields:
+
+| Field                   | Type                    | Required / Default     | Description                                                                                       |
+| :---------------------- | :---------------------- | :--------------------- | :------------------------------------------------------------------------------------------------ |
+| `biomes`                | Biome Tag or Biome List | **Required**           | Determines which biomes use this weather profile. Supports biome tags and explicit biome entries. |
+| `precipitation`         | Object                  | Optional               | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
+| `fog`                   | Object                  | Optional               | Controls custom fog coloring and density distances.                                               |
+| `effects`               | Array                   | Optional (`[]`)        | Collection of weather effects executed while the profile is active.                               |
+| `base_lightning_chance` | Integer                 | Optional (`10000`)     | Base lightning frequency. Lower numbers produce more lightning strikes.                           |
+| `foliage_color`         | Hex Color (`#AARRGGBB`) | Optional (`#00FFFFFF`) | Color overlay applied to foliage. Supports alpha transparency.                                    |
+
+---
+
+## Biomes
+
+The `biomes` field uses Minecraft's biome holder set codec.
+
+### Biome Tag Example
+
 ```json
 {
-  "biomes": "#minecraft:is_forest",
-  "base_lightning_chance": 4500,
-  "foliage_color": "#4D00FF44",
-  "precipitation": { },
-  "fog": { },
-  "effects": [ ]
+  "biomes": "#minecraft:is_forest"
 }
 ```
 
-# 2. Effects
+### Explicit Biome List Example
+
+```json
+{
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:meadow",
+    "minecraft:sunflower_plains"
+  ]
+}
+```
+
+---
+
+## Foliage Color
+
+Foliage colors use hexadecimal color notation:
+
+### RGB
+
+```json
+"#44AA55"
+```
+
+Automatically interpreted as:
+
+```text
+#FF44AA55
+```
+
+(full opacity)
+
+### ARGB
+
+```json
+"#8044AA55"
+```
+
+| Component | Value |
+| --------- | ----- |
+| Alpha     | 80    |
+| Red       | 44    |
+| Green     | AA    |
+| Blue      | 55    |
+
+The alpha channel controls overlay strength.
+
+### Default
+
+```json
+"#00FFFFFF"
+```
+
+This effectively disables foliage tinting.
+
+---
+
+# 2. Precipitation
+
+The `precipitation` object controls the visual appearance and behavior of falling weather particles.
+
+## Structure
+
+| Field            | Type               | Required / Default                                      | Description                                                                            |
+| :--------------- | :----------------- |:--------------------------------------------------------| :------------------------------------------------------------------------------------- |
+| `texture`        | Resource Location  | Optional (`high_voltage:textures/environment/none.png`) | Texture rendered as falling precipitation.                                             |
+| `tint`           | String (Hex Color) | Optional (`#FFFFFF`)                                    | Color multiplier applied to the precipitation texture.                                 |
+| `vx`             | Float              | **Required**                                            | Horizontal movement velocity.                                                          |
+| `vy`             | Float              | **Required**                                            | Vertical movement velocity. Negative values fall downward.                             |
+| `acts_like_rain` | Boolean            | Optional (`true`)                                       | Determines whether the precipitation behaves as rain for vanilla weather interactions. |
+| `land_particle`  | Particle Type      | Optional (`none`)                                         | Particle spawned when precipitation lands on surfaces.                                 |
+| `land_sound`     | Boolean            | Optional (`false`)                                      | Enables vanilla-style precipitation landing sounds.                                    |
+
+## Color Format
+
+`tint` accepts standard hexadecimal RGB colors:
+
+"#FFFFFF"
+"#44AAFF"
+"#FF0000"
+
+Alpha channels are not supported for precipitation tinting.
+
+---
+
+## Examples:
+
+```json
+{
+  "precipitation": {
+    "texture": "minecraft:textures/environment/rain.png",
+    "tint": "#A0D8FF",
+    "vx": 0.0,
+    "vy": -1.0,
+    "acts_like_rain": true,
+    "land_particle": "minecraft:rain",
+    "land_sound": true
+  }
+}
+```
+
+---
+
+```json
+{
+  "precipitation": {
+    "texture": "high_voltage:textures/environment/ash.png",
+    "tint": "#555555",
+    "vx": 0.02,
+    "vy": -0.15,
+    "acts_like_rain": false,
+    "land_particle": "minecraft:ash",
+    "land_sound": false
+  }
+}
+```
+
+---
+
+# 3. Fog
+
+The `fog` object controls client-side atmospheric fog rendering while the weather profile is active.
+
+## Structure
+
+| Field   | Type               | Required     | Description                                              |
+| :------ | :----------------- | :----------- | :------------------------------------------------------- |
+| `color` | String (Hex Color) | **Required** | Target fog color.                                        |
+| `start` | Integer            | **Required** | Distance from the camera where fog begins.               |
+| `end`   | Integer            | **Required** | Distance from the camera where fog reaches full density. |
+
+---
+
+## Color Format
+
+Fog colors use standard RGB hexadecimal values:
+
+"#FFFFFF"
+"#88AAFF"
+"#223344"
+
+The fog codec expects RGB values only, with no alpha channel.
+
+---
+
+## Distance Behavior
+
+The fog range is defined using `start` and `end`.
+
+```text
+Player
+│
+├── start
+│     Fog begins
+│
+└── end
+      Fully fogged
+```
+
+Lower values create dense fog.
+
+Higher values create lighter atmospheric effects.
+
+---
+
+## Examples: Dense Blizzard Fog
+
+```json
+{
+  "fog": {
+    "color": "#DDEEFF",
+    "start": 2,
+    "end": 32
+  }
+}
+```
+
+---
+
+```json
+{
+  "fog": {
+    "color": "#2B2B2B",
+    "start": 1,
+    "end": 16
+  }
+}
+```
+
+---
+
+```json
+{
+  "fog": {
+    "color": "#C8D8E8",
+    "start": 16,
+    "end": 96
+  }
+}
+```
+
+---
+
+# Complete Example
+
+```json
+{
+  "biomes": "#minecraft:is_forest",
+
+  "precipitation": {
+    "texture": "minecraft:textures/environment/rain.png",
+    "tint": "#A0D8FF",
+    "vx": 0.0,
+    "vy": -1.0,
+    "acts_like_rain": true,
+    "land_particle": "minecraft:rain",
+    "land_sound": true
+  },
+
+  "fog": {
+    "color": "#BFD8FF",
+    "start": 8,
+    "end": 64
+  }
+}
+```
+
+# 4. Effects
 
 Effects are custom logic components that execute while a Weather Profile is active.
 
@@ -56,9 +295,9 @@ Effects are defined inside the `effects` array:
 
 Many effects include a `chance` field.
 
-| Field    | Type    | Description                                                                                                     |
-| -------- | ------- | --------------------------------------------------------------------------------------------------------------- |
-| `chance` | Integer | Lower values result in more frequent activation. The exact interpretation depends on the effect implementation. |
+| Field    | Type    | Description                                                                                                                                                      |
+| -------- | ------- |------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `chance` | Integer | Lower values result in more frequent activation. The exact interpretation depends on the effect implementation. However in most cases it is a `1/chance` to happen |
 
 Some effects also support an `entity_predicate` field:
 
@@ -73,7 +312,7 @@ Example:
   "entity_predicate": "#minecraft:skeletons"
 }
 ```
-Or
+Or (One or the other, not both)
 
 ```json
 {
@@ -93,17 +332,17 @@ Creates additional lightning strikes around nearby players.
 "high_voltage:player_bonus_lightning"
 ```
 
-| Field    | Type    | Required | Description                      |
-| -------- | ------- | -------- | -------------------------------- |
-| `radius` | Integer | Yes      | Search radius around the player. |
-| `chance` | Integer | Yes      | Lightning strike chance.         |
+| Field    | Type    | Required | Description                                                       |
+| -------- | ------- | -------- |-------------------------------------------------------------------|
+| `radius` | Integer | Yes      | Radius around the player for it to happen, distance is in chunks. |
+| `chance` | Integer | Yes      | Lightning strike chance.                                          |
 
 Example:
 
 ```json
 {
   "type": "high_voltage:player_bonus_lightning",
-  "radius": 32,
+  "radius": 4,
   "chance": 500
 }
 ```
@@ -130,7 +369,7 @@ Example:
 ```json
 {
   "type": "high_voltage:command",
-  "run": "say Hello World!",
+  "run": "give @a minecraft:diamond",
   "chance": 200
 }
 ```

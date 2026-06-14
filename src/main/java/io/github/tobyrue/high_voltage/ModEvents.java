@@ -63,12 +63,12 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && event.level instanceof ServerLevel nether) {
-            if (nether.dimension().equals(Level.NETHER)) {
-                ServerLevel overworld = nether.getServer().getLevel(Level.OVERWORLD);
+        if (event.phase == TickEvent.Phase.START && event.level instanceof ServerLevel serverLevel) {
+            if (serverLevel.dimension().equals(Level.NETHER) || serverLevel.dimension().equals(Level.END)) {
+                ServerLevel overworld = serverLevel.getServer().getLevel(Level.OVERWORLD);
                 if (overworld != null) {
-                    nether.setRainLevel(overworld.getRainLevel(1.0F));
-                    nether.setThunderLevel(overworld.getThunderLevel(1.0F));
+                    serverLevel.setRainLevel(overworld.getRainLevel(1.0F));
+                    serverLevel.setThunderLevel(overworld.getThunderLevel(1.0F));
                 }
             }
         }

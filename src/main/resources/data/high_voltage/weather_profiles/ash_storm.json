@@ -1,5 +1,5 @@
 {
-  "biomes": ["minecraft:basalt_deltas"],
+  "biomes": "#high_voltage:ash_storm_biomes",
   "precipitation": {
     "texture": "high_voltage:textures/environment/dust.png",
     "tint": "#686868",

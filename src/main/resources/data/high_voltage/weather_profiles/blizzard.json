@@ -1,5 +1,5 @@
 {
-  "biomes": "#forge:is_cold/overworld",
+  "biomes": "#high_voltage:blizzard_biomes",
   "precipitation": {
     "texture": "high_voltage:textures/environment/heavy_snow.png",
     "tint": "#FFFFFF",

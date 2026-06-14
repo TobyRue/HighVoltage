@@ -1,5 +1,5 @@
 {
-  "biomes": "#minecraft:is_badlands",
+  "biomes": "#high_voltage:badlands_sand_storm_biomes",
   "precipitation": {
     "texture": "high_voltage:textures/environment/dust.png",
     "tint": "#A85B0A",

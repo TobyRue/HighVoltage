@@ -1,5 +1,5 @@
 {
-  "biomes": "#forge:is_desert",
+  "biomes": "#high_voltage:sand_storm_biomes",
   "precipitation": {
     "texture": "high_voltage:textures/environment/dust.png",
     "tint": "#E3BC82",

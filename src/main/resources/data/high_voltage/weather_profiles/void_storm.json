@@ -1,5 +1,5 @@
 {
-  "biomes": ["minecraft:small_end_islands"],
+  "biomes": "#high_voltage:void_storm_biomes",
   "fog": {
     "color": "#11051A",
     "start": 10,

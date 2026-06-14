@@ -1,5 +1,5 @@
 {
-  "biomes": "#high_voltage:tropic_storm_biomes",
+  "biomes": "#high_voltage:rain_storm_biomes",
   "precipitation": {
     "texture": "high_voltage:textures/environment/heavy_rain.png",
     "tint": "#F0FFF0",
@@ -10,7 +10,7 @@
     "acts_like_rain": true
   },
   "fog": {
-    "color": "#224422",
+    "color": "#0060FF",
     "start": 10,
     "end": 30
   },

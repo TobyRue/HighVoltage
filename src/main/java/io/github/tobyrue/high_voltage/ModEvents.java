@@ -19,6 +19,7 @@ import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -182,20 +183,19 @@ public class ModEvents {
     }
 
     private static void high_voltage$clearForeignStormAttributes(ServerPlayer player, java.util.Set<UUID> allowedIds) {
-        var accessor = (io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor) player.getAttributes();
-        java.util.Collection<AttributeInstance> instances = accessor.high_voltage$getAttributesMap().values();
+        for (Attribute attribute : ForgeRegistries.ATTRIBUTES) {
+            AttributeInstance attributeInstance = player.getAttributes().getInstance(attribute);
+            if (attributeInstance == null) continue;
 
-        for (AttributeInstance attributeInstance : instances) {
             java.util.Set<AttributeModifier> modifiers = new java.util.HashSet<>(attributeInstance.getModifiers());
-
             for (AttributeModifier modifier : modifiers) {
                 if (modifier.getName().startsWith("[High Voltage Weather] ")) {
                     if (!allowedIds.contains(modifier.getId())) {
                         attributeInstance.removeModifier(modifier);
 
-                        if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
+                        if (attribute == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
                             player.setHealth(player.getHealth());
-                        } else if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
+                        } else if (attribute == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
                             player.onUpdateAbilities();
                         }
                     }
@@ -203,21 +203,19 @@ public class ModEvents {
             }
         }
     }
-
     private static void high_voltage$clearAllStormAttributes(ServerPlayer player) {
-        var accessor = (io.github.tobyrue.high_voltage.mixin.AttributeMapAccessor) player.getAttributes();
-        java.util.Collection<AttributeInstance> instances = accessor.high_voltage$getAttributesMap().values();
+        for (Attribute attribute : ForgeRegistries.ATTRIBUTES) {
+            AttributeInstance attributeInstance = player.getAttributes().getInstance(attribute);
+            if (attributeInstance == null) continue;
 
-        for (AttributeInstance attributeInstance : instances) {
             java.util.Set<AttributeModifier> modifiers = new java.util.HashSet<>(attributeInstance.getModifiers());
-
             for (AttributeModifier modifier : modifiers) {
                 if (modifier.getName().startsWith("[High Voltage Weather] ")) {
                     attributeInstance.removeModifier(modifier);
 
-                    if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
+                    if (attribute == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
                         player.setHealth(player.getHealth());
-                    } else if (attributeInstance.getAttribute() == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
+                    } else if (attribute == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
                         player.onUpdateAbilities();
                     }
                 }
@@ -267,7 +265,7 @@ public class ModEvents {
         else if (effect instanceof CommandEffect cmd) {
             if (world.random.nextInt(cmd.chance()) == 0) {
                 world.getServer().getCommands().performPrefixedCommand(
-                        player.createCommandSourceStack().withPermission(4).withSuppressedOutput(),
+                        player.createCommandSourceStack().withPermission(4).withSuppressedOutput().withPosition(Vec3.atBottomCenterOf(targetPos)),
                         cmd.run()
                 );
             }

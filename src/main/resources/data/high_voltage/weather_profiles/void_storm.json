@@ -1,0 +1,41 @@
+{
+  "biomes": ["minecraft:small_end_islands"],
+  "fog": {
+    "color": "#11051A",
+    "start": 10,
+    "end": 75
+  },
+  "base_lightning_chance": -1,
+  "effects": [
+    {
+      "type": "high_voltage:disable_elytra"
+    },
+    {
+      "type": "high_voltage:summon_entity",
+      "entity": "minecraft:phantom",
+      "chance": 550,
+      "data": {
+        "Size": 8
+      }
+    },
+    {
+      "type": "high_voltage:summon_entity",
+      "entity": "minecraft:phantom",
+      "chance": 350,
+      "data": {
+        "Size": 4
+      }
+    },
+    {
+      "type": "high_voltage:play_sound",
+      "sound": "minecraft:ambient.cave",
+      "chance": 400,
+      "volume": 0.8,
+      "pitch": 0.5
+    },
+    {
+      "type": "high_voltage:command",
+      "run": "",
+    }
+  ]
+}

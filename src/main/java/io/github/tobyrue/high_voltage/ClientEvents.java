@@ -30,66 +30,6 @@ public class ClientEvents {
     private static boolean initialized = false;
 
 
-//    private static boolean wasThundering = false;
-//
-//    @SubscribeEvent
-//    public static void onClientTick(TickEvent.ClientTickEvent event) {
-//        if (event.phase == TickEvent.Phase.END) {
-//            Minecraft mc = Minecraft.getInstance();
-//            ClientLevel world = mc.level;
-//
-//            if (world != null) {
-//                boolean isThundering = world.isThundering();
-//
-//                if (isThundering != wasThundering) {
-//                    wasThundering = isThundering;
-//
-//                    mc.levelRenderer.allChanged();
-//                }
-//            }
-//        }
-//    }
-    private static boolean wasThundering = false;
-
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            Minecraft mc = Minecraft.getInstance();
-            ClientLevel world = mc.level;
-
-            if (world != null) {
-                boolean isThundering = world.isThundering();
-
-                if (isThundering != wasThundering) {
-                    wasThundering = isThundering;
-
-                    high_voltage$refreshVisibleChunksSmoothly(mc);
-                }
-            }
-        }
-    }
-
-    private static void high_voltage$refreshVisibleChunksSmoothly(Minecraft mc) {
-        if (mc.level == null || mc.player == null) return;
-
-        int viewDistance = mc.options.getEffectiveRenderDistance();
-        int playerChunkX = SectionPos.blockToSectionCoord(mc.player.getX());
-        int playerChunkZ = SectionPos.blockToSectionCoord(mc.player.getZ());
-
-        int minBlockX = (playerChunkX - viewDistance) << 4;
-        int maxBlockX = (playerChunkX + viewDistance) << 4;
-        int minBlockZ = (playerChunkZ - viewDistance) << 4;
-        int maxBlockZ = (playerChunkZ + viewDistance) << 4;
-
-        mc.levelRenderer.setBlocksDirty(
-                minBlockX,
-                mc.level.getMinBuildHeight(),
-                minBlockZ,
-                maxBlockX,
-                mc.level.getMaxBuildHeight(),
-                maxBlockZ
-        );
-    }
     @SubscribeEvent
     public static void onFogColor(ViewportEvent.ComputeFogColor event) {
         Minecraft mc = Minecraft.getInstance();

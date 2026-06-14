@@ -24,7 +24,7 @@
     },
     {
       "type": "high_voltage:damage",
-      "entity_predicate": ["#forge:boats"],
+      "entity_type": ["#forge:boats"],
       "damage": 2,
       "chance": 200
     },

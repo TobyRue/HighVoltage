@@ -57,7 +57,6 @@ public class WeatherRendererMixin {
             if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
                 Tesselator tesselator = Tesselator.getInstance();
                 BufferBuilder bufferbuilder = tesselator.getBuilder();
-
                 if (bufferbuilder.building()) {
                     tesselator.end();
                     RenderSystem.setShaderTexture(0, neededTexture);

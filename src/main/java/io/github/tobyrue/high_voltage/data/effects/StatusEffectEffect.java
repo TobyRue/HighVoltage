@@ -17,7 +17,7 @@ public record StatusEffectEffect(
         int amplifier,
         boolean ambient,
         boolean visible,
-        Optional<HolderSet<EntityType<?>>> entity_predicate,
+        Optional<HolderSet<EntityType<?>>> entity_type,
         int chance
 ) implements WeatherProfile.WeatherEffect {
 
@@ -28,8 +28,8 @@ public record StatusEffectEffect(
             Codec.BOOL.optionalFieldOf("ambient", true).forGetter(StatusEffectEffect::ambient),
             Codec.BOOL.optionalFieldOf("visible", false).forGetter(StatusEffectEffect::visible),
             RegistryCodecs.homogeneousList(Registry.ENTITY_TYPE_REGISTRY)
-                    .optionalFieldOf("entity_predicate")
-                    .forGetter(StatusEffectEffect::entity_predicate),
+                    .optionalFieldOf("entity_type")
+                    .forGetter(StatusEffectEffect::entity_type),
             Codec.INT.optionalFieldOf("chance", 1).forGetter(StatusEffectEffect::chance)
     ).apply(instance, StatusEffectEffect::new));
 

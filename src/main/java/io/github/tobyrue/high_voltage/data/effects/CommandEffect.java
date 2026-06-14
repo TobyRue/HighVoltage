@@ -7,7 +7,7 @@ import io.github.tobyrue.high_voltage.data.WeatherProfile;
 public record CommandEffect(String run, int chance) implements WeatherProfile.WeatherEffect {
     public static final Codec<CommandEffect> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("run").forGetter(CommandEffect::run),
-            Codec.INT.fieldOf("chance").forGetter(CommandEffect::chance)
+            Codec.INT.optionalFieldOf("chance", 1).forGetter(CommandEffect::chance)
     ).apply(instance, CommandEffect::new));
 
 

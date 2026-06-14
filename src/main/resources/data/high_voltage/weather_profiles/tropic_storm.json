@@ -23,7 +23,7 @@
     {
       "type": "high_voltage:damage",
       "damage": 2,
-      "entity_predicate": [
+      "entity_type": [
         "minecraft:boat",
         "minecraft:chest_boat"
       ],

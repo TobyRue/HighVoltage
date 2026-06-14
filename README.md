@@ -18,14 +18,14 @@ Every Weather Profile file uses a root object containing the following configura
 
 Every Weather Profile file uses a root object containing the following fields:
 
-| Field                   | Type                    | Required / Default     | Description                                                                                       |
-|:------------------------|:------------------------|:-----------------------|:--------------------------------------------------------------------------------------------------|
-| `biomes`                | Biome Tag or Biome List | **Required**           | Determines which biomes use this weather profile. Supports biome tags and explicit biome entries. |
-| `precipitation`         | Object                  | Optional (`none`)      | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
-| `fog`                   | Object                  | Optional (`none`)      | Controls custom fog coloring and density distances.                                               |
-| `effects`               | Array                   | Optional (`[]`)        | Collection of weather effects executed while the profile is active.                               |
-| `base_lightning_chance` | Integer                 | Optional (`10000`)     | Base lightning frequency. Lower numbers produce more lightning strikes.                           |
-| `foliage_color`         | Hex Color (`#AARRGGBB`) | Optional (`#00FFFFFF`) | Color overlay applied to foliage. Supports alpha transparency.                                    |
+| Field                   | Type                    | Default     | Description                                                                                       |
+|:------------------------|:------------------------|:------------|:--------------------------------------------------------------------------------------------------|
+| `biomes`                | Biome Tag or Biome List | -           | Determines which biomes use this weather profile. Supports biome tags and explicit biome entries. |
+| `precipitation`         | Object                  | `null`      | Controls precipitation textures, tinting, movement, particles, and sounds.                        |
+| `fog`                   | Object                  | `null`      | Controls custom fog coloring and density distances.                                               |
+| `effects`               | Array                   | `[]`        | Collection of weather effects executed while the profile is active.                               |
+| `base_lightning_chance` | Integer                 | `10000`     | Base lightning frequency. Lower numbers produce more lightning strikes.                           |
+| `foliage_color`         | Hex Color (`#AARRGGBB`) | `#00FFFFFF` | Color overlay applied to foliage. Supports alpha transparency.                                    |
 
 ---
 
@@ -104,15 +104,15 @@ The `precipitation` object controls the visual appearance and behavior of fallin
 
 ## Structure
 
-| Field            | Type               | Required / Default                                      | Description                                                                            |
-|:-----------------|:-------------------|:--------------------------------------------------------|:---------------------------------------------------------------------------------------|
-| `texture`        | Resource Location  | Optional (`high_voltage:textures/environment/none.png`) | Texture rendered as falling precipitation.                                             |
-| `tint`           | String (Hex Color) | Optional (`#FFFFFF`)                                    | Color multiplier applied to the precipitation texture.                                 |
-| `vx`             | Float              | **Required**                                            | Horizontal movement velocity.                                                          |
-| `vy`             | Float              | **Required**                                            | Vertical movement velocity.                                                            |
-| `acts_like_rain` | Boolean            | Optional (`true`)                                       | Determines whether the precipitation behaves as rain for vanilla weather interactions. |
-| `land_particle`  | Particle Type      | Optional (`none`)                                       | Particle spawned when precipitation lands on surfaces.                                 |
-| `land_sound`     | Boolean            | Optional (`false`)                                      | Enables vanilla-style precipitation landing sounds.                                    |
+| Field            | Type               | Default                                      | Description                                                                            |
+|:-----------------|:-------------------|:---------------------------------------------|:---------------------------------------------------------------------------------------|
+| `texture`        | Resource Location  | `high_voltage:textures/environment/none.png` | Texture rendered as falling precipitation.                                             |
+| `tint`           | String (Hex Color) | `#FFFFFF`                                    | Color multiplier applied to the precipitation texture.                                 |
+| `vx`             | Float              | -                                            | Horizontal movement velocity.                                                          |
+| `vy`             | Float              | -                                            | Vertical movement velocity.                                                            |
+| `acts_like_rain` | Boolean            | `true`                                       | Determines whether the precipitation behaves as rain for vanilla weather interactions. |
+| `land_particle`  | Particle Type      | `null`                                       | Particle spawned when precipitation lands on surfaces.                                 |
+| `land_sound`     | Boolean            | `false`                                      | Enables vanilla-style precipitation landing sounds.                                    |
 
 ## Color Format
 
@@ -166,11 +166,11 @@ The `fog` object controls client-side atmospheric fog rendering while the weathe
 
 ## Structure
 
-| Field   | Type               | Required     | Description                                             |
-|:--------|:-------------------|:-------------|:--------------------------------------------------------|
-| `color` | String (Hex Color) | **Required** | Target fog color.                                       |
-| `start` | Integer            | **Required** | Distance from the camera where fog begins.              |
-| `end`   | Integer            | **Required** | Distance from the camera where fog reaches full density.|
+| Field   | Type               | Default | Description                                             |
+|:--------|:-------------------|:--------|:--------------------------------------------------------|
+| `color` | String (Hex Color) | -       | Target fog color.                                       |
+| `start` | Integer            | -       | Distance from the camera where fog begins.              |
+| `end`   | Integer            | -       | Distance from the camera where fog reaches full density.|
 
 ---
 
@@ -295,24 +295,24 @@ Many effects include a `chance` field.
 | -------- | ------- |------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `chance` | Integer | Lower values result in more frequent activation. The exact interpretation depends on the effect implementation. However in most cases it is a `1/chance` to happen |
 
-Some effects also support an `entity_predicate` field:
+Some effects also support an `entity_type` field:
 
-| Field              | Type                 | Description                                                                                               |
-| ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
-| `entity_predicate` | Entity Type Tag/List | Restricts the effect to specific entity types. Accepts registry entries or tags from the entity registry. |
+| Field         | Type                 | Description                                                                                               |
+|---------------|----------------------|-----------------------------------------------------------------------------------------------------------|
+| `entity_type` | Entity Type Tag/List | Restricts the effect to specific entity types. Accepts registry entries or tags from the entity registry. |
 
 Example:
 
 ```json
 {
-  "entity_predicate": "#minecraft:skeletons"
+  "entity_type": "#minecraft:skeletons"
 }
 ```
 Or (One or the other, not both)
 
 ```json
 {
-  "entity_predicate": ["minecraft:pig","minecraft:cow"]
+  "entity_type": ["minecraft:pig","minecraft:cow"]
 }
 ```
 
@@ -328,10 +328,10 @@ Creates additional lightning strikes around nearby players.
 "high_voltage:player_bonus_lightning"
 ```
 
-| Field    | Type    | Required | Description                                                       |
-| -------- | ------- | -------- |-------------------------------------------------------------------|
-| `radius` | Integer | Yes      | Radius around the player for it to happen, distance is in chunks. |
-| `chance` | Integer | Yes      | Lightning strike chance.                                          |
+| Field    | Type    | Default | Description                                                       |
+| -------- | ------- |---------|-------------------------------------------------------------------|
+| `radius` | Integer | -       | Radius around the player for it to happen, distance is in chunks. |
+| `chance` | Integer | -       | Lightning strike chance.                                          |
 
 Example:
 
@@ -355,10 +355,10 @@ Runs a server command.
 "high_voltage:command"
 ```
 
-| Field    | Type    | Required | Description         |
-| -------- | ------- | -------- | ------------------- |
-| `run`    | String  | Yes      | Command to execute. |
-| `chance` | Integer | Yes      | Execution chance.   |
+| Field    | Type    | Default | Description         |
+| -------- | ------- |---------| ------------------- |
+| `run`    | String  | -       | Command to execute. |
+| `chance` | Integer | `1`     | Execution chance.   |
 
 Example:
 
@@ -382,11 +382,11 @@ Damages armor worn by players and entities.
 "high_voltage:damage_armor"
 ```
 
-| Field    | Type                     | Required | Description                      |
-| -------- | ------------------------ | -------- | -------------------------------- |
-| `slots`  | Array of Equipment Slots | Yes      | Armor/equipment slots to damage. |
-| `damage` | Integer                  | Yes      | Durability damage applied.       |
-| `chance` | Integer                  | Yes      | Chance for the effect to occur.  |
+| Field    | Type                     | Default | Description                      |
+| -------- | ------------------------ |---------| -------------------------------- |
+| `slots`  | Array of Equipment Slots | -       | Armor/equipment slots to damage. |
+| `damage` | Integer                  | -       | Durability damage applied.       |
+| `chance` | Integer                  | -       | Chance for the effect to occur.  |
 
 Valid slot names include:
 
@@ -422,11 +422,11 @@ Deals damage to matching entities.
 "high_voltage:damage"
 ```
 
-| Field              | Type                 | Required | Default      |
-| ------------------ | -------------------- | -------- | ------------ |
-| `damage`           | Float                | Yes      | -            |
-| `chance`           | Integer              | Yes      | -            |
-| `entity_predicate` | Entity Type List/Tag | No       | All entities |
+| Field         | Type                 | Default      |
+|---------------|----------------------|--------------|
+| `damage`      | Float                | -            |
+| `chance`      | Integer              | -            |
+| `entity_type` | Entity Type List/Tag | All entities |
 
 Example:
 
@@ -435,7 +435,7 @@ Example:
   "type": "high_voltage:damage",
   "damage": 2.0,
   "chance": 100,
-  "entity_predicate": "#minecraft:raiders"
+  "entity_type": "#minecraft:raiders"
 }
 ```
 
@@ -495,11 +495,18 @@ Automatically fills cauldrons exposed to the weather.
 "high_voltage:fill_cauldron"
 ```
 
-| Field          | Type    | Required / Default | Description                               |
-| -------------- | ------- | ------------------ | ----------------------------------------- |
-| `fluid`        | String  | Yes                | Fluid type to fill with.                  |
-| `surface_only` | Boolean | Optional (`true`)  | Only affect cauldrons exposed to the sky. |
-| `chance`       | Integer | Yes                | Fill chance.                              |
+| Field          | Type    | Default | Description                               |
+| -------------- | ------- |---------|-------------------------------------------|
+| `fluid`        | String  | -       | Fluid type to fill with (See below).      |
+| `surface_only` | Boolean | `true`  | Only affect cauldrons exposed to the sky. |
+| `chance`       | Integer | -       | Fill chance.                              |
+
+Valid fluid types are:
+```text
+lava
+water
+snow
+```
 
 Example:
 
@@ -524,9 +531,9 @@ Applies freezing damage buildup.
 "high_voltage:freeze"
 ```
 
-| Field          | Type    | Required | Description                       |
-| -------------- | ------- | -------- | --------------------------------- |
-| `freeze_ticks` | Integer | Yes      | Amount of freezing time to apply. |
+| Field          | Type    | Default | Description                       |
+|----------------|---------|---------|-----------------------------------|
+| `freeze_ticks` | Integer | -       | Amount of freezing time to apply. |
 
 Example:
 
@@ -549,10 +556,10 @@ Adds exhaustion to players.
 "high_voltage:hunger"
 ```
 
-| Field        | Type    | Required |
-| ------------ | ------- | -------- |
-| `exhaustion` | Float   | Yes      |
-| `chance`     | Integer | Yes      |
+| Field        | Type    | Default |
+| ------------ | ------- |---------|
+| `exhaustion` | Float   | -       |
+| `chance`     | Integer | -       |
 
 Example:
 
@@ -576,11 +583,11 @@ Sets matching entities on fire.
 "high_voltage:ignite"
 ```
 
-| Field              | Type                 | Required | Default      |
-| ------------------ | -------------------- | -------- | ------------ |
-| `entity_predicate` | Entity Type List/Tag | No       | All entities |
-| `chance`           | Integer              | No       | `1`          |
-| `duration`         | Integer              | No       | `100`        |
+| Field         | Type                 | Default      |
+|---------------|----------------------|--------------|
+| `entity_type` | Entity Type List/Tag | All entities |
+| `chance`      | Integer              | `1`          |
+| `duration`    | Integer              | `100`        |
 
 Example:
 
@@ -589,7 +596,7 @@ Example:
   "type": "high_voltage:ignite",
   "duration": 200,
   "chance": 10,
-  "entity_predicate": "#minecraft:animals"
+  "entity_type": "#minecraft:animals"
 }
 ```
 
@@ -607,14 +614,14 @@ Useful for snow accumulation, ash buildup, dust storms, and similar effects.
 "high_voltage:layer"
 ```
 
-| Field          | Type              | Required / Default | Description                                                                                |
-| -------------- | ----------------- | ------------------ |--------------------------------------------------------------------------------------------|
-| `block`        | Resource Location | Yes                | Block to place or modify.                                                                  |
-| `property`     | String            | Yes                | Integer property used as the layer count.                                                  |
-| `max_level`    | Integer           | Yes                | Maximum layer level.                                                                       |
-| `noisy`        | Boolean           | Yes                | Randomly chooses an inclusive value out of the `max_value` and limits the height of which. |
-| `surface_only` | Boolean           | Optional (`true`)  | Only affect exposed surfaces.                                                              |
-| `chance`       | Integer           | Yes                | Placement chance.                                                                          |
+| Field          | Type              | Default | Description                                                                                |
+|----------------|-------------------|---------|--------------------------------------------------------------------------------------------|
+| `block`        | Resource Location | -       | Block to place or modify.                                                                  |
+| `property`     | String            | -       | Integer property used as the layer count.                                                  |
+| `max_level`    | Integer           | -       | Maximum layer level.                                                                       |
+| `noisy`        | Boolean           | -       | Randomly chooses an inclusive value out of the `max_value` and limits the height of which. |
+| `surface_only` | Boolean           | `true`  | Only affect exposed surfaces.                                                              |
+| `chance`       | Integer           | -       | Placement chance.                                                                          |
 
 Example:
 
@@ -642,13 +649,13 @@ Temporarily modifies entity attributes during weather.
 "high_voltage:modify_attribute"
 ```
 
-| Field       | Type              | Required / Default | Description          |
-|-------------|-------------------|--------------------|----------------------|
-| `attribute` | Resource Location | Yes                | Attribute to modify. |
-| `name`      | String            | Yes                | Modifier name.       |
-| `value`     | Double            | Yes                | Modifier value.      |
-| `operation` | String            | Yes                | Attribute operation. |
-| `chance`    | Integer           | Optional (`1`)     | Application chance.  |
+| Field       | Type              | Default | Description          |
+|-------------|-------------------|---------|----------------------|
+| `attribute` | Resource Location | -       | Attribute to modify. |
+| `name`      | String            | -       | Modifier name.       |
+| `value`     | Double            | -       | Modifier value.      |
+| `operation` | String            | -       | Attribute operation. |
+| `chance`    | Integer           | `1`     | Application chance.  |
 
 Valid operations:
 
@@ -683,12 +690,12 @@ Plays a sound during weather.
 "high_voltage:play_sound"
 ```
 
-| Field    | Type              | Required |
-| -------- | ----------------- | -------- |
-| `sound`  | Resource Location | Yes      |
-| `volume` | Float             | Yes      |
-| `pitch`  | Float             | Yes      |
-| `chance` | Integer           | Yes      |
+| Field    | Type              | Default |
+|----------|-------------------|---------|
+| `sound`  | Resource Location | -       |
+| `volume` | Float             | -       |
+| `pitch`  | Float             | -       |
+| `chance` | Integer           | -       |
 
 Example:
 
@@ -714,10 +721,10 @@ Rings nearby bells during storms.
 "high_voltage:ring_bell"
 ```
 
-| Field    | Type    | Required | Description      |
-| -------- | ------- | -------- |------------------|
-| `radius` | Float   | Yes      | Radius in blocks |
-| `chance` | Integer | Yes      | Chance to occur  |
+| Field    | Type    | Default | Description      |
+| -------- | ------- |---------|------------------|
+| `radius` | Float   | -       | Radius in blocks |
+| `chance` | Integer | -       | Chance to occur  |
 
 Example:
 
@@ -741,15 +748,15 @@ Applies a Minecraft mob effect.
 "high_voltage:status_effect"
 ```
 
-| Field              | Type                 | Required | Default      |
-| ------------------ | -------------------- | -------- | ------------ |
-| `effect`           | Resource Location    | Yes      | -            |
-| `duration`         | Integer              | No       | `200`        |
-| `amplifier`        | Integer              | No       | `0`          |
-| `ambient`          | Boolean              | No       | `true`       |
-| `visible`          | Boolean              | No       | `false`      |
-| `entity_predicate` | Entity Type List/Tag | No       | All entities |
-| `chance`           | Integer              | No       | `1`          |
+| Field         | Type                 | Default      |
+|---------------|----------------------|--------------|
+| `effect`      | Resource Location    | -            |
+| `duration`    | Integer              | `200`        |
+| `amplifier`   | Integer              | `0`          |
+| `ambient`     | Boolean              | `true`       |
+| `visible`     | Boolean              | `false`      |
+| `entity_type` | Entity Type List/Tag | All entities |
+| `chance`      | Integer              | `1`          |
 
 Example:
 
@@ -777,11 +784,11 @@ Summons entities during weather events.
 "high_voltage:summon_entity"
 ```
 
-| Field    | Type        | Required / Default | Description                                |
-| -------- | ----------- | ------------------ | ------------------------------------------ |
-| `entity` | Entity Type | Yes                | Entity to summon.                          |
-| `data`   | NBT Object  | Optional           | Additional NBT data applied to the entity. |
-| `chance` | Integer     | Yes                | Spawn chance.                              |
+| Field    | Type        | Default | Description                                |
+|----------|-------------|---------|--------------------------------------------|
+| `entity` | Entity Type | -       | Entity to summon.                          |
+| `data`   | NBT Object  | `{}`    | Additional NBT data applied to the entity. |
+| `chance` | Integer     | -       | Spawn chance.                              |
 
 Example:
 
@@ -820,12 +827,12 @@ Useful for wind, gusts, storms, and knockback effects.
 "high_voltage:velocity"
 ```
 
-| Field              | Type                 | Required / Default | Description                    |
-| ------------------ | -------------------- | ------------------ | ------------------------------ |
-| `velocity`         | Vec3                 | Yes                | Minimum velocity applied.      |
-| `max_velocity`     | Vec3                 | Optional           | Maximum random velocity range. |
-| `entity_predicate` | Entity Type List/Tag | Optional           | Target entities.               |
-| `chance`           | Integer              | Optional (`1`)     | Activation chance.             |
+| Field          | Type                 | Default      | Description                    |
+|----------------|----------------------|--------------|--------------------------------|
+| `velocity`     | Vec3                 | -            | Minimum velocity applied.      |
+| `max_velocity` | Vec3                 | `velocity`   | Maximum random velocity range. |
+| `entity_type`  | Entity Type List/Tag | All Entities | Target entities.               |
+| `chance`       | Integer              | `1`          | Activation chance.             |
 
 If `max_velocity` is specified, a random velocity between `velocity` and `max_velocity` is chosen for each application.
 

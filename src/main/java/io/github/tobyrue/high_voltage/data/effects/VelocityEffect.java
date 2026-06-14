@@ -16,7 +16,7 @@ import java.util.Optional;
 public record VelocityEffect(
         Vec3 velocity,
         Vec3 max_velocity,
-        Optional<HolderSet<EntityType<?>>> entity_predicate,
+        Optional<HolderSet<EntityType<?>>> entity_type,
         int chance
 ) implements WeatherProfile.WeatherEffect {
 
@@ -24,8 +24,8 @@ public record VelocityEffect(
             Vec3.CODEC.fieldOf("velocity").forGetter(VelocityEffect::velocity),
             Vec3.CODEC.optionalFieldOf("max_velocity").forGetter(effect -> Optional.of(effect.max_velocity)),
             RegistryCodecs.homogeneousList(Registry.ENTITY_TYPE_REGISTRY)
-                    .optionalFieldOf("entity_predicate")
-                    .forGetter(VelocityEffect::entity_predicate),
+                    .optionalFieldOf("entity_type")
+                    .forGetter(VelocityEffect::entity_type),
             Codec.INT.optionalFieldOf("chance", 1).forGetter(VelocityEffect::chance)
     ).apply(instance, (vel, maxVelOpt, entitiesOpt, chance) -> new VelocityEffect(
             vel,

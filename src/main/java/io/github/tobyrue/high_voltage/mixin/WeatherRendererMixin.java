@@ -2,6 +2,7 @@ package io.github.tobyrue.high_voltage.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import io.github.tobyrue.high_voltage.HighVoltage;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import io.github.tobyrue.high_voltage.data.WeatherSyncHandler;
@@ -54,6 +55,7 @@ public class WeatherRendererMixin {
         if (this.high_voltage$currentProfile != null && this.high_voltage$currentProfile.precipitation() != null) {
             ResourceLocation neededTexture = this.high_voltage$currentProfile.precipitation().texture();
 
+
             if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
                 Tesselator tesselator = Tesselator.getInstance();
                 BufferBuilder bufferbuilder = tesselator.getBuilder();
@@ -66,6 +68,21 @@ public class WeatherRendererMixin {
                     float g = ((tint >> 8) & 0xFF) / 255f;
                     float b = (tint & 0xFF) / 255f;
                     RenderSystem.setShaderColor(r, g, b, 1.0F);
+
+                    bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
+                }
+                high_voltage$currentBatchTexture = neededTexture;
+            }
+        } else {
+            ResourceLocation neededTexture = ResourceLocation.fromNamespaceAndPath(HighVoltage.MODID, "textures/environment/none.png");
+
+
+            if (high_voltage$currentBatchTexture != null && !neededTexture.equals(high_voltage$currentBatchTexture)) {
+                Tesselator tesselator = Tesselator.getInstance();
+                BufferBuilder bufferbuilder = tesselator.getBuilder();
+                if (bufferbuilder.building()) {
+                    tesselator.end();
+                    RenderSystem.setShaderTexture(0, neededTexture);
 
                     bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                 }

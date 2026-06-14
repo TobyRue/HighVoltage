@@ -3,20 +3,10 @@ package io.github.tobyrue.high_voltage;
 import io.github.tobyrue.high_voltage.data.WeatherProfile;
 import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
-import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.level.FoliageColor;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -29,11 +19,10 @@ public class ClientEvents {
     private static float curEnd = 32.0f;
     private static boolean initialized = false;
 
-
     @SubscribeEvent
     public static void onFogColor(ViewportEvent.ComputeFogColor event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
+        if (mc.level == null || mc.player == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
         WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, mc.level);
@@ -41,11 +30,13 @@ public class ClientEvents {
         float targetR = event.getRed();
         float targetG = event.getGreen();
         float targetB = event.getBlue();
-        if (profile.fog() != null && mc.player != null) {
+
+        if (profile.fog() != null) {
             if (mc.level.isThundering() && OutsideDetector.isOutside(mc.level, mc.player)) {
-                targetR = (float) (profile.fog().color() >> 16 & 255) / 255.0F;
-                targetG = (float) (profile.fog().color() >> 8 & 255) / 255.0F;
-                targetB = (float) (profile.fog().color() & 255) / 255.0F;
+                int color = profile.fog().color();
+                targetR = (float) (color >> 16 & 255) / 255.0F;
+                targetG = (float) (color >> 8 & 255) / 255.0F;
+                targetB = (float) (color & 255) / 255.0F;
             }
 
             if (!initialized) {
@@ -63,7 +54,7 @@ public class ClientEvents {
             event.setGreen(curG);
             event.setBlue(curB);
         } else {
-            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
+            if (mc.level.isThundering() && OutsideDetector.isOutside(mc.level, mc.player)) {
                 targetR = (float) (biome.get().getFogColor() >> 16 & 255) / 255.0F;
                 targetG = (float) (biome.get().getFogColor() >> 8 & 255) / 255.0F;
                 targetB = (float) (biome.get().getFogColor() & 255) / 255.0F;
@@ -89,44 +80,47 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onFogRender(ViewportEvent.RenderFog event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
+        if (mc.level == null || mc.player == null) return;
 
         Holder<Biome> biome = mc.level.getBiome(event.getCamera().getBlockPosition());
-        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome,mc.level);
+        WeatherProfile profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, mc.level);
 
-        float targetStart = event.getNearPlaneDistance();
-        float targetEnd = event.getFarPlaneDistance();
+        float vanillaStart = event.getNearPlaneDistance();
+        float vanillaEnd = event.getFarPlaneDistance();
+
+        float targetStart = vanillaStart;
+        float targetEnd = vanillaEnd;
+        boolean applyingWeather = false;
 
         if (profile.fog() != null) {
-            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
-                targetStart = profile.fog().start();
-                targetEnd = profile.fog().end();
-            }
+            if (mc.level.isThundering() && OutsideDetector.isOutside(mc.level, mc.player)) {
+                float profileEnd = profile.fog().end();
 
-            curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
-            curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
-
-            event.setNearPlaneDistance(curStart);
-            event.setFarPlaneDistance(curEnd);
-
-            if (mc.level.isThundering() || Math.abs(curEnd - targetEnd) > 0.1f) {
-                event.setCanceled(true);
+                if (profileEnd < vanillaEnd) {
+                    targetStart = profile.fog().start();
+                    targetEnd = profileEnd;
+                    applyingWeather = true;
+                }
             }
         } else {
-            if (mc.level.isThundering() && mc.player != null && OutsideDetector.isOutside(mc.level, mc.player)) {
-                targetStart = 8;
-                targetEnd = 64;
+            if (mc.level.isThundering() && OutsideDetector.isOutside(mc.level, mc.player)) {
+                if (64.0f < vanillaEnd) {
+                    targetStart = 8.0f;
+                    targetEnd = 64.0f;
+                    applyingWeather = true;
+                }
             }
+        }
 
-            curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
-            curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
+        curStart += (targetStart - curStart) * FOG_CHANGE_SPEED;
+        curEnd += (targetEnd - curEnd) * FOG_CHANGE_SPEED;
 
-            event.setNearPlaneDistance(curStart);
-            event.setFarPlaneDistance(curEnd);
+        event.setNearPlaneDistance(curStart);
+        event.setFarPlaneDistance(curEnd);
 
-            if (mc.level.isThundering() || Math.abs(curEnd - targetEnd) > 0.1f) {
-                event.setCanceled(true);
-            }
+
+        if (applyingWeather || Math.abs(curEnd - vanillaEnd) > 0.1f) {
+            event.setCanceled(true);
         }
     }
 }

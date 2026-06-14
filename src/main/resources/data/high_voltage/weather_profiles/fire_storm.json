@@ -1,13 +1,5 @@
 {
   "biomes": ["minecraft:nether_wastes"],
-  "precipitation": {
-    "texture": "high_voltage:textures/environment/fire_rain.png",
-    "tint": "#FFFFFF",
-    "vx": 0.33,
-    "vy": 2.0,
-    "acts_like_rain": false,
-    "land_sound": false
-  },
   "fog": {
     "color": "#686868",
     "start": 5,
@@ -17,7 +9,12 @@
   "base_lightning_chance": -1,
   "effects": [
     {
-      "type": "high_voltage:disable_sprinting"
+      "type": "high_voltage:command",
+      "run": "execute at @s run particle minecraft:flame ~ ~ ~ 5 5 5 0.1 30 normal"
+    },
+    {
+      "type": "high_voltage:command",
+      "run": "execute at @s run particle minecraft:smoke ~ ~ ~ 5 5 5 0.01 15 normal"
     },
     {
       "type": "high_voltage:ignite",

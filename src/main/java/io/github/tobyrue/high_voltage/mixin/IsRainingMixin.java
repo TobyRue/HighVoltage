@@ -18,7 +18,6 @@ public class IsRainingMixin {
     private void high_voltage$allowDimensionWeather(CallbackInfoReturnable<Boolean> cir) {
         Level level = (Level) (Object) this;
 
-
         if (level.dimension().equals(Level.NETHER) || level.dimension().equals(Level.END)) {
             cir.setReturnValue(level.getThunderLevel(1.0F) > 0.9D);
         }

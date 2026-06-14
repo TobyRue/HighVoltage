@@ -9,7 +9,7 @@ public class ModWeatherEffects {
             WeatherProfile.WeatherEffectType.WEATHER_EFFECT_TYPES;
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<CommandEffect>> COMMAND =
-            EFFECTS.register("run", () -> new WeatherProfile.WeatherEffectType<>(CommandEffect.CODEC));
+            EFFECTS.register("command", () -> new WeatherProfile.WeatherEffectType<>(CommandEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<RingBellEffect>> RING_BELL =
             EFFECTS.register("ring_bell", () -> new WeatherProfile.WeatherEffectType<>(RingBellEffect.CODEC));
@@ -18,7 +18,7 @@ public class ModWeatherEffects {
             EFFECTS.register("play_sound", () -> new WeatherProfile.WeatherEffectType<>(PlaySoundEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<DamageArmorEffect>> DAMAGE_ARMOR =
-            EFFECTS.register("damage_armor", () -> new WeatherProfile.WeatherEffectType<>(DamageArmorEffect.CODEC));
+            EFFECTS.register("damage_equipment", () -> new WeatherProfile.WeatherEffectType<>(DamageArmorEffect.CODEC));
 
     public static final RegistryObject<WeatherProfile.WeatherEffectType<SummonEntityEffect>> SUMMON_ENTITY =
             EFFECTS.register("summon_entity", () -> new WeatherProfile.WeatherEffectType<>(SummonEntityEffect.CODEC));

@@ -17,7 +17,7 @@
   "base_lightning_chance": -1,
   "effects": [
     {
-      "type": "high_voltage:damage_armor",
+      "type": "high_voltage:damage_equipment",
       "slots": ["chest","head","feet","legs"],
       "damage": 1,
       "chance": 200

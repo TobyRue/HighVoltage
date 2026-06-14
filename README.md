@@ -784,11 +784,12 @@ Summons entities during weather events.
 "high_voltage:summon_entity"
 ```
 
-| Field    | Type        | Default | Description                                |
-|----------|-------------|---------|--------------------------------------------|
-| `entity` | Entity Type | -       | Entity to summon.                          |
-| `data`   | NBT Object  | `{}`    | Additional NBT data applied to the entity. |
-| `chance` | Integer     | -       | Spawn chance.                              |
+| Field     | Type        | Default | Description                                                    |
+|-----------|-------------|---------|----------------------------------------------------------------|
+| `entity`  | Entity Type | -       | Entity to summon.                                              |
+| `data`    | NBT Object  | `{}`    | Additional NBT data applied to the entity.                     |
+| `mob_cap` | Integer     | `12`    | Amount of entities that the storm is able to spawn in an area. |
+| `chance`  | Integer     | -       | Spawn chance.                                                  |
 
 Example:
 

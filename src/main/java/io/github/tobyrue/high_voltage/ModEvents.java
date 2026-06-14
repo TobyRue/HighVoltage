@@ -1,9 +1,6 @@
 package io.github.tobyrue.high_voltage;
 
-import io.github.tobyrue.high_voltage.data.MyNetworkHandler;
-import io.github.tobyrue.high_voltage.data.WeatherProfile;
-import io.github.tobyrue.high_voltage.data.WeatherProfileLoader;
-import io.github.tobyrue.high_voltage.data.WeatherSyncPacket;
+import io.github.tobyrue.high_voltage.data.*;
 import io.github.tobyrue.high_voltage.data.effects.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -112,12 +109,11 @@ public class ModEvents {
         ServerPlayer player = (ServerPlayer) event.player;
         ServerLevel world = player.getLevel();
         BlockPos playerPos = player.blockPosition();
-
+        boolean isOutside = OutsideDetector.isOutside(world, player);
 
         if (world.isThundering()) {
             var biome = world.getBiome(playerPos);
             var profile = WeatherProfileLoader.getProfileForBiomeWithFallback(biome, world);
-
 
             java.util.Set<UUID> currentProfileModifierIds = new java.util.HashSet<>();
             for (WeatherProfile.WeatherEffect action : profile.effects()) {
@@ -125,7 +121,6 @@ public class ModEvents {
                     currentProfileModifierIds.add(effect.getModifierId());
                 }
             }
-
 
             high_voltage$clearForeignStormAttributes(player, currentProfileModifierIds);
 
@@ -144,6 +139,12 @@ public class ModEvents {
                 attempts++;
             }
             if (targetPos == null) targetPos = playerPos;
+
+
+            if (targetPos.getY() <= world.getMinBuildHeight() || world.getBlockState(targetPos.below()).isAir()) {
+                int randomYOffset = world.random.nextInt(14) - 4;
+                targetPos = new BlockPos(targetPos.getX(), playerPos.getY() + randomYOffset, targetPos.getZ());
+            }
 
             boolean isInCorrectBiome = world.getBiome(playerPos).equals(biome);
             for (WeatherProfile.WeatherEffect action : profile.effects()) {
@@ -172,9 +173,8 @@ public class ModEvents {
                             }
                         }
                     }
-                }
-                else {
-                    runWeatherEffect(world, player, targetPos, action);
+                } else if (action instanceof IRandomTickWeatherEffect randomEffect && world.random.nextInt(randomEffect.getChance()) == 0) {
+                    randomEffect.execute(world, player, targetPos, isOutside);
                 }
             }
         } else {
@@ -217,69 +217,6 @@ public class ModEvents {
                         player.setHealth(player.getHealth());
                     } else if (attribute == net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) {
                         player.onUpdateAbilities();
-                    }
-                }
-            }
-        }
-    }
-
-    private static void runWeatherEffect(ServerLevel world, ServerPlayer player, BlockPos targetPos, WeatherProfile.WeatherEffect effect) {
-        boolean isOutside = OutsideDetector.isOutside(world, player);
-        if (effect instanceof HungerEffect hunger) {
-            if (world.random.nextInt(hunger.chance()) == 0) {
-                player.getFoodData().addExhaustion(hunger.exhaustion());
-            }
-        }
-
-        else if (effect instanceof PlaySoundEffect playEffect) {
-            if (world.random.nextInt(playEffect.chance()) == 0) {
-                SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(playEffect.sound());
-                if (soundEvent != null) {
-                    world.playSound(null, targetPos, soundEvent, SoundSource.WEATHER, playEffect.volume(), playEffect.pitch());
-                }
-            }
-        }
-
-        else if (effect instanceof SummonEntityEffect summon) {
-            if (world.random.nextInt(summon.chance()) == 0) {
-                var entity = summon.entity().create(world);
-                if (entity != null) {
-                    summon.data().ifPresent(entity::load);
-                    entity.moveTo(Vec3.atBottomCenterOf(targetPos));
-                    world.addFreshEntity(entity);
-                }
-            }
-        }
-
-        else if (effect instanceof DamageArmorEffect armor) {
-            if (world.random.nextInt(armor.chance()) == 0) {
-                for (EquipmentSlot slot : armor.slots()) {
-                    var stack = player.getItemBySlot(slot);
-                    if (!stack.isEmpty() && stack.isDamageableItem()) {
-                        stack.hurtAndBreak(armor.damage(), player, (p) -> p.broadcastBreakEvent(slot));
-                    }
-                }
-            }
-        }
-
-        else if (effect instanceof CommandEffect cmd) {
-            if (world.random.nextInt(cmd.chance()) == 0) {
-                world.getServer().getCommands().performPrefixedCommand(
-                        player.createCommandSourceStack().withPermission(4).withSuppressedOutput().withPosition(Vec3.atBottomCenterOf(targetPos)),
-                        cmd.run()
-                );
-            }
-        }
-
-        else if (effect instanceof FreezeEffect freeze) {
-            if (isOutside) {
-                if (player.getTicksFrozen() < freeze.freeze_ticks()) {
-                    if (!(player.getLevel().getBrightness(LightLayer.BLOCK, player.getOnPos().above()) > 11)) {
-                        player.setTicksFrozen(player.getTicksFrozen() + 5);
-                    }
-                } else if (freeze.freeze_ticks() == player.getTicksFrozen()) {
-                    if (!(player.getLevel().getBrightness(LightLayer.BLOCK, player.getOnPos().above()) > 11)) {
-                        player.setTicksFrozen(freeze.freeze_ticks());
                     }
                 }
             }

@@ -27,15 +27,8 @@
       }
     },
     {
-      "type": "high_voltage:play_sound",
-      "sound": "minecraft:ambient.cave",
-      "chance": 400,
-      "volume": 0.8,
-      "pitch": 0.5
-    },
-    {
       "type": "high_voltage:command",
-      "run": "",
+      "run": "execute at @s run particle minecraft:portal ~ ~ ~ 5 5 5 1 30 normal"
     }
   ]
 }
